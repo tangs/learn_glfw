@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 static const char* vertex_shader_text =
 "#version 330 core\n"
@@ -47,9 +48,17 @@ static float vertices[] = {
     0.0f, 0.5f, 0.0f,
     1.f, 0.5f, 0.0f,
 };
+static float vertices2[] = {
+    // 位置              // 颜色
+     0.0f, 0.f, 0.0f,  1.0f, 0.0f, 0.0f,   // 右下
+    -1.f, 0.f, 0.0f,  0.0f, 1.0f, 0.0f,   // 左下
+     -0.5f,  1.f, 0.0f,  0.0f, 0.0f, 1.0f    // 顶部
+};
 static GLuint VBO;
+static GLuint VBO2;
 static GLuint VAO;
 static GLuint VAO2;
+static GLuint VAO3;
 //static GLuint EBO;
 
 static void error_callback(int error, const char* description) {
@@ -99,19 +108,25 @@ static void render(GLFWwindow *window) {
 //    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 //    glBindVertexArray(0);
     
+    float timeValue = glfwGetTime();
+    float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
     int colorLocation = glGetUniformLocation(sharder_program_green, "destColor");
-    int val = frame % 512;
-    if (val >= 256) val = 512 - val;
-    glUniform4f(colorLocation, val / 256.f, 0, 0, 1.0f);
+//    int val = frame % 512;
+//    if (val >= 256) val = 512 - val;
     
     glUseProgram(sharder_program);
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
     
-    
     glUseProgram(sharder_program_green);
     glBindVertexArray(VAO2);
     glDrawArrays(GL_TRIANGLES, 0, 3);
+    glBindVertexArray(VAO3);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+//    float vec[] = {0, greenValue, 0, 1.0f};
+//    glUniform1fv(colorLocation, 1, vec);
+    glUniform4f(colorLocation, 0.f, greenValue, 0.f, 1.0f);
+    glUseProgram(0);
 }
 
 int main() {
@@ -191,7 +206,9 @@ int main() {
     
     glGenVertexArrays(1, &VAO);
     glGenVertexArrays(1, &VAO2);
+    glGenVertexArrays(1, &VAO3);
     glGenBuffers(1, &VBO);
+    glGenBuffers(1, &VBO2);
 //    glGenBuffers(1, &EBO);
     
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -211,6 +228,14 @@ int main() {
     glBindVertexArray(VAO2);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
                           (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(0);
+    
+    //
+    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices2), vertices2, GL_STATIC_DRAW);
+    
+    glBindVertexArray(VAO3);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     
     while(!glfwWindowShouldClose(window)) {
