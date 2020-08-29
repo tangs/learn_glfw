@@ -20,6 +20,7 @@ option(GLFW_BUILD_TESTS "Build the GLFW test programs" ON)
 option(GLFW_BUILD_DOCS "Build the GLFW documentation" ON)
 option(GLFW_INSTALL "Generate installation target" ON)
 option(GLFW_VULKAN_STATIC "Assume the Vulkan loader is linked with the application" OFF)
+option(GLFW_BUILD_LEARN "Build learn openGL" ON)
 
 include(GNUInstallDirs)
 include(CMakeDependentOption)
@@ -340,6 +341,10 @@ endif()
 
 if (DOXYGEN_FOUND AND GLFW_BUILD_DOCS)
     add_subdirectory(docs)
+endif()
+
+if (GLFW_BUILD_LEARN)
+    add_subdirectory(learn)
 endif()
 
 #--------------------------------------------------------------------
