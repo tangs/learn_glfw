@@ -330,6 +330,7 @@ configure_file(src/glfw3.pc.in src/glfw3.pc @ONLY)
 # Add subdirectories
 #--------------------------------------------------------------------
 add_subdirectory(src)
+add_subdirectory(external/cglm)
 
 if (GLFW_BUILD_EXAMPLES)
     add_subdirectory(examples)

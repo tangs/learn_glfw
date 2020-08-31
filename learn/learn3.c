@@ -8,6 +8,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <cglm/cglm.h>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 
@@ -96,31 +98,51 @@ static void init_image_data() {
     bind_texture(&texture2, "awesomface.png");
 }
 
+static mat4 trans;
+float angle = 0.0f;
+
 static void process_input(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GL_TRUE);
     }
+
+    bool change_angle = false;
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
         off_x -= 0.01;
         GLint location = glGetUniformLocation(program, "offX");
         glUniform1f(location, off_x);
+        angle = 90.0f;
+        change_angle = true;
     }
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
         off_x += 0.01;
         GLint location = glGetUniformLocation(program, "offX");
         glUniform1f(location, off_x);
+        angle = 270.0f;
+        change_angle = true;
     }
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
         off_y += 0.01;
         GLint location = glGetUniformLocation(program, "offY");
         glUniform1f(location, off_y);
+        angle = 0.0f;
+        change_angle = true;
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
         off_y -= 0.01;
         GLint location = glGetUniformLocation(program, "offY");
         glUniform1f(location, off_y);
+        angle = 180.0f;
+        change_angle = true;
     }
     glUniform1f(glGetUniformLocation(program, "mixValue"), (off_x + 1.0) / 2);
+
+    glm_mat4_identity(trans);
+    glm_translate(trans, (vec3){0.5f, -0.5f, 0.0f});
+    glm_rotate(trans, (float)glfwGetTime(), (vec3){0.0f, 0.0f, 1.0f});
+    float scale = sin(glfwGetTime());
+    glm_scale(trans, (vec3){scale, scale, scale});
+    glUniformMatrix4fv(glGetUniformLocation(program, "transform"), 1, GL_FALSE, trans);
 }
 
 static GLuint compile_shader(const char *path, GLenum type) {
@@ -156,6 +178,8 @@ static void render(GLFWwindow *window) {
 //    glBindVertexArray(ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+//    glUniformMatrix4fv(glGetUniformLocation(program, "transform"), 1, GL_FALSE, trans);
+
 //    glDrawArrays(GL_TRIANGLES, 0, 3);
 //    double time = glfwGetTime();
 //    float offX = sin(time);
@@ -163,6 +187,15 @@ static void render(GLFWwindow *window) {
 }
 
 int main() {
+//    vec4 vec = {1.0f, 0.f, 0.0f, 1.0f};
+//    glm_mat4_identity(trans);
+//    glm_translate(trans, (vec3){1.0f, 1.0f, 0.0f});
+//    glm_mat4_mulv(trans, vec, vec);
+//    printf("%f %f %f\n", vec[0], vec[1], vec[2]);
+    glm_mat4_identity(trans);
+    glm_rotate(trans, glm_rad(0.0f), (vec3){0.0f, 0.0f, 1.0f});
+    glm_scale(trans, (vec3){0.5f, 0.5f, 0.5f});
+
     glfwSetErrorCallback(error_callback);
 
     if (!glfwInit()) exit(EXIT_FAILURE);

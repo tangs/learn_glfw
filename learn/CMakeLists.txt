@@ -52,9 +52,10 @@ add_executable(learn_opengl_2 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS
 add_executable(learn_opengl_3 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS} ${STB} ${IMAGES}
                learn3.c utils.c)
 
+target_link_libraries(learn_opengl_3 PRIVATE cglm)
+
 set(GUI_ONLY_BINARIES learn_opengl_1)
 set(CONSOLE_BINARIES offscreen)
-
 
 if (MSVC)
     # Tell MSVC to use main instead of WinMain for Windows subsystem executables
