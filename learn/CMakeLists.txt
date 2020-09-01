@@ -44,7 +44,8 @@ set(SHADERS "${GLFW_SOURCE_DIR}/shaders/pos_col_frag.shader"
             "${GLFW_SOURCE_DIR}/shaders/pos_col_vertex_img.shader")
 set(IMAGES  "${GLFW_SOURCE_DIR}/res/p1tank.png"
             "${GLFW_SOURCE_DIR}/res/awesomface.png"
-            "${GLFW_SOURCE_DIR}/res/tuichu.png")
+            "${GLFW_SOURCE_DIR}/res/tuichu.png"
+            "${GLFW_SOURCE_DIR}/res/cube_met.png")
 
 add_executable(learn_opengl_1 WIN32 MACOSX_BUNDLE learn.c ${ICON} ${GLAD_GLAD})
 add_executable(learn_opengl_2 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS} ${STB} ${IMAGES}

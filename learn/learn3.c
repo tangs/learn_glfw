@@ -15,31 +15,74 @@
 
 #include "utils.h"
 
-static int frame = 0;
+static int frame_ = 0;
 
-static GLuint vertex_shader = 0;
-static GLuint frag_shader = 0;
-static GLuint program = 0;
+static const int WIN_WIDTH = 1280;
+static const int WIN_HEIGHT = 720;
 
-static GLuint vbo = 0;
-static GLuint vao = 0;
-static GLuint ebo = 0;
+static GLuint vertex_shader_ = 0;
+static GLuint frag_shader_ = 0;
+static GLuint program_ = 0;
 
-static GLuint texture = 0;
-static GLuint texture2 = 0;
+static GLuint vbo_ = 0;
+static GLuint vao_ = 0;
+static GLuint ebo_ = 0;
 
-static float vertices[] = {
-//     ---- 位置 ----       ---- 颜色 ----     - 纹理坐标 -
-    0.1f,  0.1f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // 右上
-    0.1f, -0.1f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // 右下
-    -0.1f, -0.1f, 0.0f,  0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // 左下
-    -0.1f,  0.1f, 0.0f,  1.0f, 1.0f, 0.0f,   0.0f, 1.0f,   // 左上
+static GLuint texture_ = 0;
+static GLuint texture2_ = 0;
+
+static float vertices_[] = {
+//     ---- 位置 ----         - 纹理坐标 -
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f,  0.333f, 0.0f,
+        0.5f,  0.5f, -0.5f,  0.333f, 0.333f,
+        0.5f,  0.5f, -0.5f,  0.333f, 0.333f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 0.333f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+        -0.5f, -0.5f,  0.5f,  0.333f, 0.0f,
+        0.5f, -0.5f,  0.5f,  0.666f, 0.0f,
+        0.5f,  0.5f,  0.5f,  0.666f, 0.333f,
+        0.5f,  0.5f,  0.5f,  0.666f, 0.333f,
+        -0.5f,  0.5f,  0.5f,  0.333f, 0.333f,
+        -0.5f, -0.5f,  0.5f,  0.333f, 0.0f,
+
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  1.0f, 0.333f,
+        -0.5f, -0.5f, -0.5f,  0.666f, 0.333f,
+        -0.5f, -0.5f, -0.5f,  0.666f, 0.333f,
+        -0.5f, -0.5f,  0.5f,  0.666f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+        0.5f,  0.5f,  0.5f,  0.333f, 0.333f,
+        0.5f,  0.5f, -0.5f,  0.333f, 0.666f,
+        0.5f, -0.5f, -0.5f,  0.0f, 0.666f,
+        0.5f, -0.5f, -0.5f,  0.0f, 0.666f,
+        0.5f, -0.5f,  0.5f,  0.0f, 0.333f,
+        0.5f,  0.5f,  0.5f,  0.333f, 0.333f,
+
+        -0.5f, -0.5f, -0.5f,  0.333f, 0.666f,
+        0.5f, -0.5f, -0.5f,  0.666f, 0.666f,
+        0.5f, -0.5f,  0.5f,  0.666f, 0.333f,
+        0.5f, -0.5f,  0.5f,  0.666f, 0.333f,
+        -0.5f, -0.5f,  0.5f,  0.333f, 0.333f,
+        -0.5f, -0.5f, -0.5f,  0.333f, 0.666f,
+
+        -0.5f,  0.5f, -0.5f,  0.666f, 0.666f,
+        0.5f,  0.5f, -0.5f,  1.0f, 0.666f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.333f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.333f,
+        -0.5f,  0.5f,  0.5f,  0.666f, 0.333f,
+        -0.5f,  0.5f, -0.5f,  0.666f, 0.666f,
 };
 
-unsigned int indices[] = {
+unsigned int indices_[] = {
         0, 1, 3, // first triangle
         1, 2, 3  // second triangle
 };
+
+static float off_x_ = 0;
+static float off_y_ = 0;
 
 static void error_callback(int error, const char* description) {
     fprintf(stderr, "Error: %s\n", description);
@@ -50,27 +93,24 @@ static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-static float off_x = 0;
-static float off_y = 0;
-
 static void init_vao_data() {
-    glGenVertexArrays(1, &vao);
-    glGenBuffers(1, &vbo);
-    glGenBuffers(1, &ebo);
+    glGenVertexArrays(1, &vao_);
+    glGenBuffers(1, &vbo_);
+    glGenBuffers(1, &ebo_);
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_), vertices_, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices_), indices_, GL_STATIC_DRAW);
 
-    glBindVertexArray(vao);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glBindVertexArray(vao_);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+//    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
+//    glEnableVertexAttribArray(2);
 }
 
 static void bind_texture(GLuint *texture, const char *path) {
@@ -94,55 +134,112 @@ static void bind_texture(GLuint *texture, const char *path) {
 
 static void init_image_data() {
     stbi_set_flip_vertically_on_load(1);
-    bind_texture(&texture, "p1tank.png");
-    bind_texture(&texture2, "awesomface.png");
+    bind_texture(&texture2_, "p1tank.png");
+//    bind_texture(&texture_, "awesomface.png");
+    bind_texture(&texture_, "cube_met.png");
 }
 
-static mat4 trans;
-float angle = 0.0f;
+float angle_ = 0.0f;
+static mat4 trans_;
+mat4 projection_mat_;
+mat4 model_mat_;
+//mat4 view_mat_;
+vec3 camera_pos_ = (vec3){0.0f, 0.0f, 10.0f};
+vec3 model_rot_ = (vec3){70.0f, 0.0f, 0.0f};
 
 static void process_input(GLFWwindow *window) {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, GL_TRUE);
+//    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+//        glfwSetWindowShouldClose(window, GL_TRUE);
+//    }
+//
+//    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+//        off_x_ -= 0.01;
+//        GLint location = glGetUniformLocation(program_, "offX");
+//        glUniform1f(location, off_x_);
+//        angle_ = 90.0f;
+//    }
+//    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+//        off_x_ += 0.01;
+//        GLint location = glGetUniformLocation(program_, "offX");
+//        glUniform1f(location, off_x_);
+//        angle_ = 270.0f;
+//    }
+//    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+//        off_y_ += 0.01;
+//        GLint location = glGetUniformLocation(program_, "offY");
+//        glUniform1f(location, off_y_);
+//        angle_ = 0.0f;
+//    }
+//    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+//        off_y_ -= 0.01;
+//        GLint location = glGetUniformLocation(program_, "offY");
+//        glUniform1f(location, off_y_);
+//        angle_ = 180.0f;
+//    }
+//    glUniform1f(glGetUniformLocation(program_, "mixValue"), (off_x_ + 1.0) / 2);
+//
+//    glm_mat4_identity(trans_);
+//    glm_translate(trans_, (vec3){0.5f, -0.5f, 0.0f});
+//    glm_rotate(trans_, (float)glfwGetTime(), (vec3){0.0f, 0.0f, 1.0f});
+//    float scale = sin(glfwGetTime());
+//    glm_scale(trans_, (vec3){scale, scale, scale});
+//    glUniformMatrix4fv(glGetUniformLocation(program_, "transform"), 1, GL_FALSE, (const GLfloat *)trans_);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+//        glm_translate(view_mat_, (vec3){-0.01f, 0.0f, 0.0f});
+        glm_vec3_add(camera_pos_, (vec3){-0.05f, 0.0f, 0.0f}, camera_pos_);
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+//        glm_translate(view_mat_, (vec3){0.01f, 0.0f, 0.0f});
+        glm_vec3_add(camera_pos_, (vec3){0.05f, 0.0f, 0.0f}, camera_pos_);
+    }
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+//        glm_translate(view_mat_, (vec3){0.0f, -0.01f, 0.0f});
+        glm_vec3_add(camera_pos_, (vec3){0.0f, -0.05f, 0.0f}, camera_pos_);
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+//        glm_translate(view_mat_, (vec3){0.0f, 0.01f, 0.0f});
+        glm_vec3_add(camera_pos_, (vec3){0.0f, 0.05f, 0.0f}, camera_pos_);
+    }
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+//        glm_translate(view_mat_, (vec3){0.0f, 0.0f, -0.05f});
+        glm_vec3_add(camera_pos_, (vec3){0.0f, 0.0f, -0.05f}, camera_pos_);
+    }
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+//        glm_translate(view_mat_, (vec3){0.0f, 0.0f, 0.05f});
+        glm_vec3_add(camera_pos_, (vec3){0.0f, 0.0f, 0.05f}, camera_pos_);
     }
 
-    bool change_angle = false;
-    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        off_x -= 0.01;
-        GLint location = glGetUniformLocation(program, "offX");
-        glUniform1f(location, off_x);
-        angle = 90.0f;
-        change_angle = true;
-    }
-    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        off_x += 0.01;
-        GLint location = glGetUniformLocation(program, "offX");
-        glUniform1f(location, off_x);
-        angle = 270.0f;
-        change_angle = true;
-    }
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        off_y += 0.01;
-        GLint location = glGetUniformLocation(program, "offY");
-        glUniform1f(location, off_y);
-        angle = 0.0f;
-        change_angle = true;
+        glm_rotate(model_mat_, glm_rad(-1.0f), (vec3){1.0f, 0.0f, 0.0f});
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        off_y -= 0.01;
-        GLint location = glGetUniformLocation(program, "offY");
-        glUniform1f(location, off_y);
-        angle = 180.0f;
-        change_angle = true;
+        glm_rotate(model_mat_, glm_rad(1.0f), (vec3){1.0f, 0.0f, 0.0f});
     }
-    glUniform1f(glGetUniformLocation(program, "mixValue"), (off_x + 1.0) / 2);
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+        glm_rotate(model_mat_, glm_rad(-1.0f), (vec3){0.0f, 1.0f, 0.0f});
+    }
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+        glm_rotate(model_mat_, glm_rad(1.0f), (vec3){0.0f, 1.0f, 0.0f});
+    }
+    if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
+        glm_rotate(model_mat_, glm_rad(-1.0f), (vec3){0.0f, 0.0f, 1.0f});
+    }
+    if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
+        glm_rotate(model_mat_, glm_rad(1.0f), (vec3){0.0f, 0.0f, 1.0f});
+    }
+//    float radius = 10.0f;
+//    camera_pos_[0] = sin(glfwGetTime()) * radius;
+//    camera_pos_[2] = cos(glfwGetTime()) * radius;
 
-    glm_mat4_identity(trans);
-    glm_translate(trans, (vec3){0.5f, -0.5f, 0.0f});
-    glm_rotate(trans, (float)glfwGetTime(), (vec3){0.0f, 0.0f, 1.0f});
-    float scale = sin(glfwGetTime());
-    glm_scale(trans, (vec3){scale, scale, scale});
-    glUniformMatrix4fv(glGetUniformLocation(program, "transform"), 1, GL_FALSE, trans);
+    mat4 view_mat;
+    glm_lookat(camera_pos_, (vec3){0.0f, 0.0f, 0.0f}, (vec3){0.0f, 1.0f, 0.0f}, view_mat);
+    mat4 model_mat;
+    glm_mat4_copy(model_mat_, model_mat);
+    glm_translate_to(model_mat_, model_rot_, model_mat);
+
+    glUniformMatrix4fv(glGetUniformLocation(program_, "model"), 1, GL_FALSE, (const GLfloat *)model_mat);
+    glUniformMatrix4fv(glGetUniformLocation(program_, "view"), 1, GL_FALSE, (const GLfloat *)view_mat);
+    glUniformMatrix4fv(glGetUniformLocation(program_, "projection"), 1, GL_FALSE, (const GLfloat *)projection_mat_);
 }
 
 static GLuint compile_shader(const char *path, GLenum type) {
@@ -166,18 +263,46 @@ static GLuint compile_shader(const char *path, GLenum type) {
     return shader;
 }
 
-static void render(GLFWwindow *window) {
-    glUseProgram(program);
+static vec3 cubePositions[] = {
+        { 0.0f,  0.0f,  0.0f},
+        { 3.0f,  0.0f,  0.0f},
+        {-3.0f,  0.0f,  0.0f},
+        { 0.0f,  3.0f,  0.0f},
+        { 0.0f, -3.0f,  0.0f},
+        { 0.0f,  0.0f,  3.0f},
+        { 0.0f,  0.0f, -3.0f},
+};
+
+static vec3 cubeRotAis[] = {
+        { 0.0f,  0.0f,  0.0f},
+        {-1.0f,  0.0f,  0.0f},
+        { 1.0f,  0.0f,  0.0f},
+        { 0.0f,  1.0f,  0.0f},
+        { 0.0f, -1.0f,  0.0f},
+        { 0.0f,  0.0f,  1.0f},
+        { 0.0f,  0.0f, -1.0f},
+};
+
+static void render() {
+    glUseProgram(program_);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glBindTexture(GL_TEXTURE_2D, texture_);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, texture2);
-    glUniform1i(glGetUniformLocation(program, "texture1"), 0);
-    glUniform1i(glGetUniformLocation(program, "texture2"), 1);
+    glBindTexture(GL_TEXTURE_2D, texture2_);
+    glUniform1i(glGetUniformLocation(program_, "texture1"), 0);
+    glUniform1i(glGetUniformLocation(program_, "texture2"), 1);
 //    glBindVertexArray(vao);
 //    glBindVertexArray(ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
+    for (int i = 0; i < sizeof(cubePositions) / sizeof(cubePositions[0]); ++i) {
+        mat4 model_mat, model_rot;
+        glm_translate_to(model_mat_, cubePositions[i], model_mat);
+        if (i) glm_rotate(model_mat, glm_rad((int)(glfwGetTime() * 250) % 360), cubeRotAis[i]);
+        glUniformMatrix4fv(glGetUniformLocation(program_, "model"), 1, GL_FALSE, (const GLfloat *)model_mat);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
+
+//    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 //    glUniformMatrix4fv(glGetUniformLocation(program, "transform"), 1, GL_FALSE, trans);
 
 //    glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -192,9 +317,19 @@ int main() {
 //    glm_translate(trans, (vec3){1.0f, 1.0f, 0.0f});
 //    glm_mat4_mulv(trans, vec, vec);
 //    printf("%f %f %f\n", vec[0], vec[1], vec[2]);
-    glm_mat4_identity(trans);
-    glm_rotate(trans, glm_rad(0.0f), (vec3){0.0f, 0.0f, 1.0f});
-    glm_scale(trans, (vec3){0.5f, 0.5f, 0.5f});
+//    glm_ortho()
+    glm_mat4_identity(projection_mat_);
+    glm_mat4_identity(model_mat_);
+//    glm_mat4_identity(view_mat_);
+
+    glm_perspective(glm_rad(45.0f), (float)WIN_WIDTH / WIN_HEIGHT,
+                    0.1f, 100.0f, projection_mat_);
+    glm_rotate(model_mat_, glm_rad(-55.0f), (vec3){1.0f, 0.0f, 0.0f});
+//    glm_translate(view_mat_, (vec3){0.0f, 0.0f, -20.0f});
+
+//    glm_mat4_identity(trans_);
+//    glm_rotate(trans_, glm_rad(0.0f), (vec3){0.0f, 0.0f, 1.0f});
+//    glm_scale(trans_, (vec3){0.5f, 0.5f, 0.5f});
 
     glfwSetErrorCallback(error_callback);
 
@@ -207,7 +342,7 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(WIN_WIDTH, WIN_HEIGHT, "LearnOpenGL", NULL, NULL);
     if (window == NULL) {
         fprintf(stderr, "Failed to create GLFW window\n");
         glfwTerminate();
@@ -223,47 +358,47 @@ int main() {
     }
 
     // init shader.
-    vertex_shader = compile_shader("../Shaders/pos_col_vertex_img.shader", GL_VERTEX_SHADER);
-    if (!vertex_shader) {
+    vertex_shader_ = compile_shader("../Shaders/pos_col_vertex_img.shader", GL_VERTEX_SHADER);
+    if (!vertex_shader_) {
         return -3;
     }
-    frag_shader = compile_shader("../Shaders/pos_col_frag_img.shader", GL_FRAGMENT_SHADER);
-    if (!frag_shader) {
+    frag_shader_ = compile_shader("../Shaders/pos_col_frag_img.shader", GL_FRAGMENT_SHADER);
+    if (!frag_shader_) {
         return -4;
     }
-    program = glCreateProgram();
-    glAttachShader(program, vertex_shader);
-    glAttachShader(program, frag_shader);
-    glLinkProgram(program);
-    glDeleteShader(vertex_shader);
-    glDeleteShader(frag_shader);
+    program_ = glCreateProgram();
+    glAttachShader(program_, vertex_shader_);
+    glAttachShader(program_, frag_shader_);
+    glLinkProgram(program_);
+    glDeleteShader(vertex_shader_);
+    glDeleteShader(frag_shader_);
 
     // init VAO
     init_vao_data();
     init_image_data();
 
-    glUniform1f(glGetUniformLocation(program, "mixValue"), 0.5);
+    glUniform1f(glGetUniformLocation(program_, "mixValue"), 0.5);
 
-//    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_DEPTH_TEST);
+//    glEnable(GL_BLEND);
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     while(!glfwWindowShouldClose(window)) {
         process_input(window);
 
         glClearColor(0.91f, 0.91f, 0.91f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        render(window);
+        render();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
-        ++frame;
+        ++frame_;
     }
 
-    glDeleteVertexArrays(1, &vao);
-    glDeleteBuffers(1, &vbo);
-    glDeleteBuffers(1, &ebo);
+    glDeleteVertexArrays(1, &vao_);
+    glDeleteBuffers(1, &vbo_);
+    glDeleteBuffers(1, &ebo_);
 
     glfwTerminate();
     return 0;

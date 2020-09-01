@@ -168,7 +168,7 @@ gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
 
 static GLfloat view_rotx = 20.f, view_roty = 30.f, view_rotz = 0.f;
 static GLint gear1, gear2, gear3;
-static GLfloat angle = 0.f;
+static GLfloat angle_ = 0.f;
 
 /* OpenGL draw function & timing */
 static void draw(void)
@@ -183,19 +183,19 @@ static void draw(void)
 
     glPushMatrix();
       glTranslatef(-3.0, -2.0, 0.0);
-      glRotatef(angle, 0.0, 0.0, 1.0);
+      glRotatef(angle_, 0.0, 0.0, 1.0);
       glCallList(gear1);
     glPopMatrix();
 
     glPushMatrix();
       glTranslatef(3.1f, -2.f, 0.f);
-      glRotatef(-2.f * angle - 9.f, 0.f, 0.f, 1.f);
+      glRotatef(-2.f * angle_ - 9.f, 0.f, 0.f, 1.f);
       glCallList(gear2);
     glPopMatrix();
 
     glPushMatrix();
       glTranslatef(-3.1f, 4.2f, 0.f);
-      glRotatef(-2.f * angle - 25.f, 0.f, 0.f, 1.f);
+      glRotatef(-2.f * angle_ - 25.f, 0.f, 0.f, 1.f);
       glCallList(gear3);
     glPopMatrix();
 
@@ -206,7 +206,7 @@ static void draw(void)
 /* update animation parameters */
 static void animate(void)
 {
-  angle = 100.f * (float) glfwGetTime();
+    angle_ = 100.f * (float) glfwGetTime();
 }
 
 
