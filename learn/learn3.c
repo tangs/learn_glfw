@@ -147,12 +147,51 @@ static mat4 projection_mat_;
 static mat4 model_mat_;
 
 static vec3 camera_pos_     = (vec3){0.0f, 0.0f, 10.0f};
-static vec3 camera_front_    = (vec3){0.0f, 0.0f, -1.0f};
-static vec3 camera_up_       = (vec3){0.0f, 1.0f,  0.0f};
+static vec3 camera_front_   = (vec3){0.0f, 0.0f, -1.0f};
+static vec3 camera_up_      = (vec3){0.0f, 1.0f,  0.0f};
 
 static vec3 model_rot_ = (vec3){70.0f, 0.0f, 0.0f};
 
+static float yaw_ = -90.0f;
+static float pitch_ = 0.0f;
+static float fov_ = 45.0f;
+
 //static const float camera_speed_ = 0.05f;
+
+static float last_x = WIN_WIDTH / 2;
+static float last_y = WIN_HEIGHT / 2;
+static const float sensitivity = 0.05f;
+static bool first_mouse = true;
+
+static void scroll_callback(GLFWwindow* window, double x_offset, double y_offset) {
+    fov_ -= y_offset;
+    fov_ = glm_clamp(fov_, 1.0f, 45.0f);
+}
+
+static void mouse_callback(GLFWimage* window, double x_pos, double y_pos) {
+    if (first_mouse) {
+        last_x = x_pos;
+        last_y = y_pos;
+        first_mouse = false;
+    }
+    float x_offset = x_pos - last_x;
+    float y_offset = y_pos - last_y;
+    last_x = x_pos;
+    last_y = y_pos;
+
+    x_offset *= sensitivity;
+    y_offset *= sensitivity;
+
+    yaw_ += x_offset;
+    pitch_ += y_offset;
+
+    pitch_ = glm_clamp(pitch_, -89.f, 89.f);
+    camera_front_[0] = cos(glm_rad(pitch_)) * cos(glm_rad(yaw_));
+    camera_front_[1] = sin(glm_rad(pitch_));
+    camera_front_[2] = cos(glm_rad(pitch_)) * sin(glm_rad(yaw_));
+    glm_normalize(camera_front_);
+//    printf("%f, %f\n", pitch_, yaw_);
+}
 
 static void process_input(GLFWwindow *window) {
 
@@ -189,6 +228,10 @@ static void process_input(GLFWwindow *window) {
         glm_vec3_add(camera_pos_, speed, camera_pos_);
     }
 
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+        glfwSetWindowShouldClose(window, GL_TRUE);
+    }
+
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
         glm_rotate(model_mat_, glm_rad(-1.0f), (vec3){1.0f, 0.0f, 0.0f});
     }
@@ -219,6 +262,9 @@ static void process_input(GLFWwindow *window) {
     mat4 model_mat;
     glm_mat4_copy(model_mat_, model_mat);
     glm_translate_to(model_mat_, model_rot_, model_mat);
+
+    glm_perspective(glm_rad(fov_), (float)WIN_WIDTH / WIN_HEIGHT,
+                    0.1f, 100.0f, projection_mat_);
 
     glUniformMatrix4fv(glGetUniformLocation(program_, "model"), 1, GL_FALSE, (const GLfloat *)model_mat);
     glUniformMatrix4fv(glGetUniformLocation(program_, "view"), 1, GL_FALSE, (const GLfloat *)view_mat);
@@ -342,6 +388,10 @@ int main() {
     init_image_data();
 
     glUniform1f(glGetUniformLocation(program_, "mixValue"), 0.5);
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
 
     glEnable(GL_DEPTH_TEST);
 //    glEnable(GL_BLEND);
