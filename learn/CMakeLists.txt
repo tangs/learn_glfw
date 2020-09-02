@@ -56,8 +56,11 @@ add_executable(learn_opengl_2 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS
                learn2.c utils.c)
 add_executable(learn_opengl_3 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS} ${STB} ${IMAGES}
                learn3.c utils.c)
+add_executable(learn_opengl_4 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS} ${STB} ${IMAGES}
+               learn4.c utils.c camera.c)
 
 target_link_libraries(learn_opengl_3 PRIVATE cglm)
+target_link_libraries(learn_opengl_4 PRIVATE cglm)
 
 set(GUI_ONLY_BINARIES learn_opengl_1)
 set(CONSOLE_BINARIES offscreen)
@@ -72,6 +75,7 @@ if (APPLE)
     set_target_properties(learn_opengl_1 PROPERTIES MACOSX_BUNDLE_BUNDLE_NAME "learn_opengl_1")
     set_target_properties(learn_opengl_2 PROPERTIES MACOSX_BUNDLE_BUNDLE_NAME "learn_opengl_2")
     set_target_properties(learn_opengl_3 PROPERTIES MACOSX_BUNDLE_BUNDLE_NAME "learn_opengl_3")
+    set_target_properties(learn_opengl_4 PROPERTIES MACOSX_BUNDLE_BUNDLE_NAME "learn_opengl_4")
 
     set_source_files_properties(glfw.icns ${IMAGES} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
