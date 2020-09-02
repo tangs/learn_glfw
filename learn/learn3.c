@@ -16,6 +16,8 @@
 #include "utils.h"
 
 static int frame_ = 0;
+static float delta_time_ = 0.0f;
+static float last_frame_time_ = 0.0f;
 
 static const int WIN_WIDTH = 1280;
 static const int WIN_HEIGHT = 720;
@@ -139,74 +141,52 @@ static void init_image_data() {
     bind_texture(&texture_, "cube_met.png");
 }
 
-float angle_ = 0.0f;
+//static float angle_ = 0.0f;
 static mat4 trans_;
-mat4 projection_mat_;
-mat4 model_mat_;
-//mat4 view_mat_;
-vec3 camera_pos_ = (vec3){0.0f, 0.0f, 10.0f};
-vec3 model_rot_ = (vec3){70.0f, 0.0f, 0.0f};
+static mat4 projection_mat_;
+static mat4 model_mat_;
+
+static vec3 camera_pos_     = (vec3){0.0f, 0.0f, 10.0f};
+static vec3 camera_front_    = (vec3){0.0f, 0.0f, -1.0f};
+static vec3 camera_up_       = (vec3){0.0f, 1.0f,  0.0f};
+
+static vec3 model_rot_ = (vec3){70.0f, 0.0f, 0.0f};
+
+//static const float camera_speed_ = 0.05f;
 
 static void process_input(GLFWwindow *window) {
-//    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-//        glfwSetWindowShouldClose(window, GL_TRUE);
-//    }
-//
-//    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-//        off_x_ -= 0.01;
-//        GLint location = glGetUniformLocation(program_, "offX");
-//        glUniform1f(location, off_x_);
-//        angle_ = 90.0f;
-//    }
-//    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-//        off_x_ += 0.01;
-//        GLint location = glGetUniformLocation(program_, "offX");
-//        glUniform1f(location, off_x_);
-//        angle_ = 270.0f;
-//    }
-//    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-//        off_y_ += 0.01;
-//        GLint location = glGetUniformLocation(program_, "offY");
-//        glUniform1f(location, off_y_);
-//        angle_ = 0.0f;
-//    }
-//    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-//        off_y_ -= 0.01;
-//        GLint location = glGetUniformLocation(program_, "offY");
-//        glUniform1f(location, off_y_);
-//        angle_ = 180.0f;
-//    }
-//    glUniform1f(glGetUniformLocation(program_, "mixValue"), (off_x_ + 1.0) / 2);
-//
-//    glm_mat4_identity(trans_);
-//    glm_translate(trans_, (vec3){0.5f, -0.5f, 0.0f});
-//    glm_rotate(trans_, (float)glfwGetTime(), (vec3){0.0f, 0.0f, 1.0f});
-//    float scale = sin(glfwGetTime());
-//    glm_scale(trans_, (vec3){scale, scale, scale});
-//    glUniformMatrix4fv(glGetUniformLocation(program_, "transform"), 1, GL_FALSE, (const GLfloat *)trans_);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-//        glm_translate(view_mat_, (vec3){-0.01f, 0.0f, 0.0f});
-        glm_vec3_add(camera_pos_, (vec3){-0.05f, 0.0f, 0.0f}, camera_pos_);
-    }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-//        glm_translate(view_mat_, (vec3){0.01f, 0.0f, 0.0f});
-        glm_vec3_add(camera_pos_, (vec3){0.05f, 0.0f, 0.0f}, camera_pos_);
-    }
+
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-//        glm_translate(view_mat_, (vec3){0.0f, -0.01f, 0.0f});
-        glm_vec3_add(camera_pos_, (vec3){0.0f, -0.05f, 0.0f}, camera_pos_);
+        vec3 speed;
+        glm_vec3_fill(speed, 2.5f * delta_time_);
+        glm_vec3_mul(speed, camera_front_, speed);
+        glm_vec3_add(camera_pos_, speed, camera_pos_);
+//        glm_vec3_print(camera_pos_, stdout);
     }
+
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-//        glm_translate(view_mat_, (vec3){0.0f, 0.01f, 0.0f});
-        glm_vec3_add(camera_pos_, (vec3){0.0f, 0.05f, 0.0f}, camera_pos_);
+        vec3 speed;
+        glm_vec3_fill(speed, 2.5f * delta_time_);
+        glm_vec3_mul(speed, camera_front_, speed);
+        glm_vec3_sub(camera_pos_, speed, camera_pos_);
     }
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-//        glm_translate(view_mat_, (vec3){0.0f, 0.0f, -0.05f});
-        glm_vec3_add(camera_pos_, (vec3){0.0f, 0.0f, -0.05f}, camera_pos_);
+
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        vec3 speed, tmp;
+        glm_vec3_fill(speed, 2.5f * delta_time_);
+        glm_cross(camera_front_, camera_up_, tmp);
+        glm_normalize(tmp);
+        glm_vec3_mul(speed, tmp, speed);
+        glm_vec3_sub(camera_pos_, speed, camera_pos_);
     }
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-//        glm_translate(view_mat_, (vec3){0.0f, 0.0f, 0.05f});
-        glm_vec3_add(camera_pos_, (vec3){0.0f, 0.0f, 0.05f}, camera_pos_);
+
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        vec3 speed, tmp;
+        glm_vec3_fill(speed, 2.5f * delta_time_);
+        glm_cross(camera_front_, camera_up_, tmp);
+        glm_normalize(tmp);
+        glm_vec3_mul(speed, tmp, speed);
+        glm_vec3_add(camera_pos_, speed, camera_pos_);
     }
 
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
@@ -232,7 +212,10 @@ static void process_input(GLFWwindow *window) {
 //    camera_pos_[2] = cos(glfwGetTime()) * radius;
 
     mat4 view_mat;
-    glm_lookat(camera_pos_, (vec3){0.0f, 0.0f, 0.0f}, (vec3){0.0f, 1.0f, 0.0f}, view_mat);
+//    glm_lookat(camera_pos_, (vec3){0.0f, 0.0f, 0.0f}, (vec3){0.0f, 1.0f, 0.0f}, view_mat);
+    vec3 center;
+    glm_vec3_add(camera_pos_, camera_front_, center);
+    glm_lookat(camera_pos_, center, camera_up_, view_mat);
     mat4 model_mat;
     glm_mat4_copy(model_mat_, model_mat);
     glm_translate_to(model_mat_, model_rot_, model_mat);
@@ -301,23 +284,9 @@ static void render() {
         glUniformMatrix4fv(glGetUniformLocation(program_, "model"), 1, GL_FALSE, (const GLfloat *)model_mat);
         glDrawArrays(GL_TRIANGLES, 0, 36);
     }
-
-//    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-//    glUniformMatrix4fv(glGetUniformLocation(program, "transform"), 1, GL_FALSE, trans);
-
-//    glDrawArrays(GL_TRIANGLES, 0, 3);
-//    double time = glfwGetTime();
-//    float offX = sin(time);
-//    glUniform1f(glGetUniformLocation(program, "offX"), offX);
 }
 
 int main() {
-//    vec4 vec = {1.0f, 0.f, 0.0f, 1.0f};
-//    glm_mat4_identity(trans);
-//    glm_translate(trans, (vec3){1.0f, 1.0f, 0.0f});
-//    glm_mat4_mulv(trans, vec, vec);
-//    printf("%f %f %f\n", vec[0], vec[1], vec[2]);
-//    glm_ortho()
     glm_mat4_identity(projection_mat_);
     glm_mat4_identity(model_mat_);
 //    glm_mat4_identity(view_mat_);
@@ -325,11 +294,6 @@ int main() {
     glm_perspective(glm_rad(45.0f), (float)WIN_WIDTH / WIN_HEIGHT,
                     0.1f, 100.0f, projection_mat_);
     glm_rotate(model_mat_, glm_rad(-55.0f), (vec3){1.0f, 0.0f, 0.0f});
-//    glm_translate(view_mat_, (vec3){0.0f, 0.0f, -20.0f});
-
-//    glm_mat4_identity(trans_);
-//    glm_rotate(trans_, glm_rad(0.0f), (vec3){0.0f, 0.0f, 1.0f});
-//    glm_scale(trans_, (vec3){0.5f, 0.5f, 0.5f});
 
     glfwSetErrorCallback(error_callback);
 
@@ -383,7 +347,11 @@ int main() {
 //    glEnable(GL_BLEND);
 //    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    last_frame_time_ = glfwGetTime();
     while(!glfwWindowShouldClose(window)) {
+        float time = glfwGetTime();
+        delta_time_ = time - last_frame_time_;
+        last_frame_time_ = time;
         process_input(window);
 
         glClearColor(0.91f, 0.91f, 0.91f, 1.0f);
