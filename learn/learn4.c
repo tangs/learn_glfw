@@ -10,12 +10,9 @@
 
 #include <cglm/cglm.h>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb/stb_image.h>
-
-#include "utils.h"
-
 #include "camera.h"
+#include "shader.h"
+#include "texture2d.h"
 
 static int frame_ = 0;
 static float delta_time_ = 0.0f;
@@ -24,60 +21,58 @@ static float last_frame_time_ = 0.0f;
 static const int WIN_WIDTH = 1280;
 static const int WIN_HEIGHT = 720;
 
-static GLuint vertex_shader_ = 0;
-static GLuint frag_shader_ = 0;
-static GLuint program_ = 0;
+static struct Shader shader_;
 
 static GLuint vbo_ = 0;
 static GLuint vao_ = 0;
 static GLuint ebo_ = 0;
 
-static GLuint texture_ = 0;
-static GLuint texture2_ = 0;
+static struct Texture2d *texture1_;
+static struct Texture2d *texture2_;
 
 static float vertices_[] = {
 //     ---- 位置 ----         - 纹理坐标 -
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f,  0.333f, 0.0f,
-        0.5f,  0.5f, -0.5f,  0.333f, 0.333f,
-        0.5f,  0.5f, -0.5f,  0.333f, 0.333f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 0.333f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,    0.0f, 0.0f,             0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f,     0.333f, 0.0f,           1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,     0.333f, 0.333f,         1.0f, 1.0f,
+        0.5f,  0.5f, -0.5f,     0.333f, 0.333f,         1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,    0.0f, 0.333f,           0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,    0.0f, 0.0f,             0.0f, 0.0f,
 
-        -0.5f, -0.5f,  0.5f,  0.333f, 0.0f,
-        0.5f, -0.5f,  0.5f,  0.666f, 0.0f,
-        0.5f,  0.5f,  0.5f,  0.666f, 0.333f,
-        0.5f,  0.5f,  0.5f,  0.666f, 0.333f,
-        -0.5f,  0.5f,  0.5f,  0.333f, 0.333f,
-        -0.5f, -0.5f,  0.5f,  0.333f, 0.0f,
+        -0.5f, -0.5f,  0.5f,    0.333f, 0.0f,           0.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,     0.666f, 0.0f,           1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,     0.666f, 0.333f,         1.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,     0.666f, 0.333f,         1.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,    0.333f, 0.333f,         0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,    0.333f, 0.0f,           0.0f, 0.0f,
 
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  1.0f, 0.333f,
-        -0.5f, -0.5f, -0.5f,  0.666f, 0.333f,
-        -0.5f, -0.5f, -0.5f,  0.666f, 0.333f,
-        -0.5f, -0.5f,  0.5f,  0.666f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,    1.0f, 0.0f,             1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,    1.0f, 0.333f,           1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,    0.666f, 0.333f,         0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,    0.666f, 0.333f,         0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,    0.666f, 0.0f,           0.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,    1.0f, 0.0f,             1.0f, 0.0f,
 
-        0.5f,  0.5f,  0.5f,  0.333f, 0.333f,
-        0.5f,  0.5f, -0.5f,  0.333f, 0.666f,
-        0.5f, -0.5f, -0.5f,  0.0f, 0.666f,
-        0.5f, -0.5f, -0.5f,  0.0f, 0.666f,
-        0.5f, -0.5f,  0.5f,  0.0f, 0.333f,
-        0.5f,  0.5f,  0.5f,  0.333f, 0.333f,
+        0.5f,  0.5f,  0.5f,     0.333f, 0.333f,         1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,     0.333f, 0.666f,         1.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,     0.0f, 0.666f,           0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,     0.0f, 0.666f,           0.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,     0.0f, 0.333f,           0.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,     0.333f, 0.333f,         1.0f, 0.0f,
 
-        -0.5f, -0.5f, -0.5f,  0.333f, 0.666f,
-        0.5f, -0.5f, -0.5f,  0.666f, 0.666f,
-        0.5f, -0.5f,  0.5f,  0.666f, 0.333f,
-        0.5f, -0.5f,  0.5f,  0.666f, 0.333f,
-        -0.5f, -0.5f,  0.5f,  0.333f, 0.333f,
-        -0.5f, -0.5f, -0.5f,  0.333f, 0.666f,
+        -0.5f, -0.5f, -0.5f,    0.333f, 0.666f,         0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,     0.666f, 0.666f,         1.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,     0.666f, 0.333f,         1.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,     0.666f, 0.333f,         1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,    0.333f, 0.333f,         0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,    0.333f, 0.666f,         0.0f, 1.0f,
 
-        -0.5f,  0.5f, -0.5f,  0.666f, 0.666f,
-        0.5f,  0.5f, -0.5f,  1.0f, 0.666f,
-        0.5f,  0.5f,  0.5f,  1.0f, 0.333f,
-        0.5f,  0.5f,  0.5f,  1.0f, 0.333f,
-        -0.5f,  0.5f,  0.5f,  0.666f, 0.333f,
-        -0.5f,  0.5f, -0.5f,  0.666f, 0.666f,
+        -0.5f,  0.5f, -0.5f,    0.666f, 0.666f,         0.0f, 1.0f,
+        0.5f,  0.5f, -0.5f,     1.0f, 0.666f,           1.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,     1.0f, 0.333f,           1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,     1.0f, 0.333f,           1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,    0.666f, 0.333f,         0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,    0.666f, 0.666f,         0.0f, 1.0f,
 };
 
 unsigned int indices_[] = {
@@ -109,38 +104,20 @@ static void init_vao_data() {
 //    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices_), indices_, GL_STATIC_DRAW);
 
     glBindVertexArray(vao_);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(5 * sizeof(float)));
 //    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
-//    glEnableVertexAttribArray(2);
-}
-
-static void bind_texture(GLuint *texture, const char *path) {
-    int width, height, nr_channels;
-    unsigned char *data = stbi_load(path, &width, &height, &nr_channels, 0);
-
-    if (!data) {
-        fprintf(stderr, "load image fail.");
-        return;
-    }
-    glGenTextures(1, texture);
-    glBindTexture(GL_TEXTURE_2D, *texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    stbi_image_free(data);
+    glEnableVertexAttribArray(2);
 }
 
 static void init_image_data() {
-    stbi_set_flip_vertically_on_load(1);
-    bind_texture(&texture2_, "p1tank.png");
-//    bind_texture(&texture_, "awesomface.png");
-    bind_texture(&texture_, "cube_met.png");
+    texture1_ = texture_create("cube_met.png");
+    texture2_ = texture_create("awesomface.png");
+    texture_retain(texture1_);
+    texture_retain(texture2_);
 }
 
 //static float angle_ = 0.0f;
@@ -154,13 +131,13 @@ static float last_x = WIN_WIDTH / 2;
 static float last_y = WIN_HEIGHT / 2;
 static bool first_mouse = true;
 
-struct Camera camera_;
+static struct Camera camera_;
 
 static void scroll_callback(GLFWwindow* window, double x_offset, double y_offset) {
     camera_process_mouse_scroll(&camera_, y_offset);
 }
 
-static void mouse_callback(GLFWimage* window, double x_pos, double y_pos) {
+static void mouse_callback(GLFWwindow* window, double x_pos, double y_pos) {
     if (first_mouse) {
         last_x = x_pos;
         last_y = y_pos;
@@ -214,43 +191,6 @@ static void process_input(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
         glm_rotate(model_mat_, glm_rad(1.0f), (vec3){0.0f, 0.0f, 1.0f});
     }
-//    float radius = 10.0f;
-//    camera_pos_[0] = sin(glfwGetTime()) * radius;
-//    camera_pos_[2] = cos(glfwGetTime()) * radius;
-
-//    mat4 view_mat;
-////    glm_lookat(camera_pos_, (vec3){0.0f, 0.0f, 0.0f}, (vec3){0.0f, 1.0f, 0.0f}, view_mat);
-//    vec3 center;
-//    glm_vec3_add(camera_pos_, camera_front_, center);
-//    glm_lookat(camera_pos_, center, camera_up_, view_mat);
-//    mat4 model_mat;
-//    glm_mat4_copy(model_mat_, model_mat);
-//    glm_translate_to(model_mat_, model_rot_, model_mat);
-//
-//    glm_perspective(glm_rad(fov_), (float)WIN_WIDTH / WIN_HEIGHT,
-//                    0.1f, 100.0f, projection_mat_);
-
-}
-
-static GLuint compile_shader(const char *path, GLenum type) {
-    char tmp[512];
-    int ret_code = read_file(path, tmp, sizeof(tmp));
-    if (ret_code) {
-        return 0;
-    }
-    const char* str = tmp;
-    GLuint shader = glCreateShader(type);
-    glShaderSource(shader, 1, &str, NULL);
-    glCompileShader(shader);
-    int success;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        char info_log[512];
-        glGetShaderInfoLog(shader, sizeof(info_log), NULL, info_log);
-        fprintf(stderr, "ERROR::SHADER::VERTEX::COMPILATION_FAILED:%s\n", info_log);
-        return 1;
-    }
-    return shader;
 }
 
 static vec3 cubePositions[] = {
@@ -280,33 +220,30 @@ static void update_mat() {
     glm_perspective(glm_rad(camera_.zoom), (float)WIN_WIDTH / WIN_HEIGHT,
                     0.1f, 100.0f, projection_mat_);
 
-    glUniformMatrix4fv(glGetUniformLocation(program_, "view"), 1, GL_FALSE, (const GLfloat *)view_mat);
-    glUniformMatrix4fv(glGetUniformLocation(program_, "projection"), 1, GL_FALSE, (const GLfloat *)projection_mat_);
+    shader_set_matrix(shader_, "view", view_mat);
+    shader_set_matrix(shader_, "projection", projection_mat_);
 }
 
 static void render() {
     update_mat();
-    glUseProgram(program_);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture_);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, texture2_);
-    glUniform1i(glGetUniformLocation(program_, "texture1"), 0);
-    glUniform1i(glGetUniformLocation(program_, "texture2"), 1);
-//    glBindVertexArray(vao);
-//    glBindVertexArray(ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
+    shader_use(shader_);
+//    glActiveTexture(GL_TEXTURE0);
+//    glBindTexture(GL_TEXTURE_2D, texture1_->id);
+//    glActiveTexture(GL_TEXTURE1);
+//    glBindTexture(GL_TEXTURE_2D, texture2_->id);
+//    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
+
     for (int i = 0; i < sizeof(cubePositions) / sizeof(cubePositions[0]); ++i) {
-        mat4 model_mat, model_rot;
+        mat4 model_mat;
         glm_translate_to(model_mat_, cubePositions[i], model_mat);
         if (i) glm_rotate(model_mat, glm_rad((int)(glfwGetTime() * 250) % 360), cubeRotAis[i]);
-        glUniformMatrix4fv(glGetUniformLocation(program_, "model"), 1, GL_FALSE, (const GLfloat *)model_mat);
+        shader_set_matrix(shader_, "model", model_mat);
         glDrawArrays(GL_TRIANGLES, 0, 36);
     }
 }
 
 int main() {
-
+    texture2d_cache_init();
     camera_init(&camera_, (vec3){0.0f, 0.0f, 10.0f}, (vec3){0.0f, 1.0f,  0.0f}, -90.0f, 0.0f);
     glm_mat4_identity(projection_mat_);
     glm_mat4_identity(model_mat_);
@@ -343,26 +280,20 @@ int main() {
     }
 
     // init shader.
-    vertex_shader_ = compile_shader("../Shaders/pos_col_vertex_img.shader", GL_VERTEX_SHADER);
-    if (!vertex_shader_) {
+    if (shader_init(&shader_,
+                "../Shaders/pos_col_vertex_img.shader",
+                "../Shaders/pos_col_frag_img.shader")) {
         return -3;
     }
-    frag_shader_ = compile_shader("../Shaders/pos_col_frag_img.shader", GL_FRAGMENT_SHADER);
-    if (!frag_shader_) {
-        return -4;
-    }
-    program_ = glCreateProgram();
-    glAttachShader(program_, vertex_shader_);
-    glAttachShader(program_, frag_shader_);
-    glLinkProgram(program_);
-    glDeleteShader(vertex_shader_);
-    glDeleteShader(frag_shader_);
 
     // init VAO
     init_vao_data();
     init_image_data();
 
-    glUniform1f(glGetUniformLocation(program_, "mixValue"), 0.5);
+    shader_use(shader_);
+    shader_set_int(shader_, "texture1", 0);
+    shader_set_int(shader_, "texture2", 1);
+    shader_set_float(shader_, "mixValue", 0.5f);
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     glfwSetCursorPosCallback(window, mouse_callback);
@@ -371,6 +302,12 @@ int main() {
     glEnable(GL_DEPTH_TEST);
 //    glEnable(GL_BLEND);
 //    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture1_->id);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, texture2_->id);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
 
     last_frame_time_ = glfwGetTime();
     while(!glfwWindowShouldClose(window)) {
@@ -396,4 +333,3 @@ int main() {
     glfwTerminate();
     return 0;
 }
-

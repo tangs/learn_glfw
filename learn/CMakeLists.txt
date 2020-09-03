@@ -3,6 +3,16 @@ link_libraries(glfw)
 
 include_directories("${GLFW_SOURCE_DIR}/deps")
 
+link_directories(/usr/local/lib)
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GLIB_PKG glib-2.0)
+
+if (GLIB_PKG_FOUND)
+    message(Found glib-2.0)
+    include_directories(${GLIB_PKG_INCLUDE_DIRS})
+endif()
+
 if (CMAKE_BUILD_TYPE STREQUAL Debug)
     add_definitions(-DDEBUG)
 endif()
@@ -57,10 +67,10 @@ add_executable(learn_opengl_2 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS
 add_executable(learn_opengl_3 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS} ${STB} ${IMAGES}
                learn3.c utils.c)
 add_executable(learn_opengl_4 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS} ${STB} ${IMAGES}
-               learn4.c utils.c camera.c)
+               learn4.c utils.c camera.c shader.c texture2d.c)
 
 target_link_libraries(learn_opengl_3 PRIVATE cglm)
-target_link_libraries(learn_opengl_4 PRIVATE cglm)
+target_link_libraries(learn_opengl_4 PRIVATE cglm glib-2.0)
 
 set(GUI_ONLY_BINARIES learn_opengl_1)
 set(CONSOLE_BINARIES offscreen)
