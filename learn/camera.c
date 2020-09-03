@@ -42,7 +42,7 @@ void camera_get_view_matrix(struct Camera *camera, mat4 dest) {
     glm_lookat(camera->position, center, camera->up, dest);
 }
 
-void camera_process_keyboard(struct Camera *camera, enum Camera_Movement direction, float delta_time) {
+void camera_process_keyboard(struct Camera *camera, enum CameraMovement direction, float delta_time) {
     vec3 dt;
     glm_vec3_fill(dt, camera->movement_speed * delta_time);
     switch (direction) {

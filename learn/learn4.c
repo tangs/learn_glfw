@@ -149,16 +149,6 @@ static mat4 projection_mat_;
 static mat4 model_mat_;
 static vec3 model_rot_ = (vec3){70.0f, 0.0f, 0.0f};
 
-//static vec3 camera_pos_     = (vec3){0.0f, 0.0f, 10.0f};
-//static vec3 camera_front_   = (vec3){0.0f, 0.0f, -1.0f};
-//static vec3 camera_up_      = (vec3){0.0f, 1.0f,  0.0f};
-//
-//static float yaw_ = -90.0f;
-//static float pitch_ = 0.0f;
-//static float fov_ = 45.0f;
-//static const float sensitivity = 0.05f;
-
-//static const float camera_speed_ = 0.05f;
 
 static float last_x = WIN_WIDTH / 2;
 static float last_y = WIN_HEIGHT / 2;
