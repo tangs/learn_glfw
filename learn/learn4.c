@@ -310,7 +310,7 @@ int main() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
 
     last_frame_time_ = glfwGetTime();
-    while(!glfwWindowShouldClose(window)) {
+    while (!glfwWindowShouldClose(window)) {
         float time = glfwGetTime();
         delta_time_ = time - last_frame_time_;
         last_frame_time_ = time;
