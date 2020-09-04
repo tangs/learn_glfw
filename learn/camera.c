@@ -2,6 +2,7 @@
 // Created by tangs on 2020/9/2.
 //
 
+#include <string.h>
 #include "camera.h"
 
 static void update_camera_vectors(struct Camera *camera) {
@@ -20,6 +21,7 @@ static void update_camera_vectors(struct Camera *camera) {
 }
 
 void camera_init(struct Camera *camera, vec3 position, vec3 up, float yaw, float pitch) {
+    memset(camera, 0, sizeof(struct Camera));
     glm_vec3_copy(position, camera->position);
     glm_vec3_copy(up, camera->world_up);
     camera->yaw = yaw;

@@ -54,6 +54,7 @@ set(TINYCTHREAD "${GLFW_SOURCE_DIR}/deps/tinycthread.h"
 set(STB "${GLFW_SOURCE_DIR}/deps/stb/stb_image.h")
 set(SHADERS "${GLFW_SOURCE_DIR}/shaders/pos_col_frag.shader"
             "${GLFW_SOURCE_DIR}/shaders/pos_col_frag_img.shader"
+            "${GLFW_SOURCE_DIR}/shaders/pos_col_frag_white.shader"
             "${GLFW_SOURCE_DIR}/shaders/pos_col_vertex.shader"
             "${GLFW_SOURCE_DIR}/shaders/pos_col_vertex_img.shader")
 set(IMAGES  "${GLFW_SOURCE_DIR}/res/p1tank.png"
@@ -67,7 +68,8 @@ add_executable(learn_opengl_2 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS
 add_executable(learn_opengl_3 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS} ${STB} ${IMAGES}
                learn3.c utils.c)
 add_executable(learn_opengl_4 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS} ${STB} ${IMAGES}
-               learn4.c utils.c camera.c shader.c texture2d.c)
+               learn4.c utils.c camera.c shader.c texture2d.c
+               component/transform.c component/image.c)
 
 target_link_libraries(learn_opengl_3 PRIVATE cglm)
 target_link_libraries(learn_opengl_4 PRIVATE cglm glib-2.0)

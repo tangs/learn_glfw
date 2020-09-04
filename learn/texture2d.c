@@ -45,12 +45,12 @@ struct Texture2d* texture_create(const char *path) {
     return texture2d;
 }
 
-texture_retain(struct Texture2d* texture2d) {
+void texture_retain(struct Texture2d* texture2d) {
     assert(texture2d);
     texture2d->ref++;
 }
 
-texture_release(struct Texture2d* texture2d) {
+void texture_release(struct Texture2d* texture2d) {
     assert(texture2d);
     if (--texture2d->ref <= 0) {
         gpointer key, value;

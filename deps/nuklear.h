@@ -2775,7 +2775,7 @@ NK_API void nk_group_scrolled_end(struct nk_context*);
 /// Parameter   | Description
 /// ------------|-----------------------------------------------------------
 /// __ctx__     | Must point to an previously initialized `nk_context` struct
-/// __type__    | Value from the nk_tree_type section to visually mark a tree node header as either a collapseable UI section or tree node
+/// __type__    | Value from the nk_tree_type section to visually mark a tree component header as either a collapseable UI section or tree component
 /// __title__   | Label printed in the tree header
 /// __state__   | Initial tree state value out of nk_collapse_states
 ///
@@ -2791,7 +2791,7 @@ NK_API void nk_group_scrolled_end(struct nk_context*);
 /// Parameter   | Description
 /// ------------|-----------------------------------------------------------
 /// __ctx__     | Must point to an previously initialized `nk_context` struct
-/// __type__    | Value from the nk_tree_type section to visually mark a tree node header as either a collapseable UI section or tree node
+/// __type__    | Value from the nk_tree_type section to visually mark a tree component header as either a collapseable UI section or tree component
 /// __title__   | Label printed in the tree header
 /// __state__   | Initial tree state value out of nk_collapse_states
 /// __id__      | Loop counter index if this function is called in a loop
@@ -2809,7 +2809,7 @@ NK_API void nk_group_scrolled_end(struct nk_context*);
 /// Parameter   | Description
 /// ------------|-----------------------------------------------------------
 /// __ctx__     | Must point to an previously initialized `nk_context` struct
-/// __type__    | Value from the nk_tree_type section to visually mark a tree node header as either a collapseable UI section or tree node
+/// __type__    | Value from the nk_tree_type section to visually mark a tree component header as either a collapseable UI section or tree component
 /// __title__   | Label printed in the tree header
 /// __state__   | Initial tree state value out of nk_collapse_states
 /// __hash__    | Memory block or string to generate the ID from
@@ -2834,7 +2834,7 @@ NK_API int nk_tree_push_hashed(struct nk_context*, enum nk_tree_type, const char
 /// Parameter   | Description
 /// ------------|-----------------------------------------------------------
 /// __ctx__     | Must point to an previously initialized `nk_context` struct
-/// __type__    | Value from the nk_tree_type section to visually mark a tree node header as either a collapseable UI section or tree node
+/// __type__    | Value from the nk_tree_type section to visually mark a tree component header as either a collapseable UI section or tree component
 /// __img__     | Image to display inside the header on the left of the label
 /// __title__   | Label printed in the tree header
 /// __state__   | Initial tree state value out of nk_collapse_states
@@ -2853,7 +2853,7 @@ NK_API int nk_tree_push_hashed(struct nk_context*, enum nk_tree_type, const char
 /// Parameter   | Description
 /// ------------|-----------------------------------------------------------
 /// __ctx__     | Must point to an previously initialized `nk_context` struct
-/// __type__    | Value from the nk_tree_type section to visually mark a tree node header as either a collapseable UI section or tree node
+/// __type__    | Value from the nk_tree_type section to visually mark a tree component header as either a collapseable UI section or tree component
 /// __img__     | Image to display inside the header on the left of the label
 /// __title__   | Label printed in the tree header
 /// __state__   | Initial tree state value out of nk_collapse_states
@@ -2872,7 +2872,7 @@ NK_API int nk_tree_push_hashed(struct nk_context*, enum nk_tree_type, const char
 /// Parameter   | Description
 /// ------------|-----------------------------------------------------------
 /// __ctx__     | Must point to an previously initialized `nk_context` struct
-/// __type__    | Value from the nk_tree_type section to visually mark a tree node header as either a collapseable UI section or tree node
+/// __type__    | Value from the nk_tree_type section to visually mark a tree component header as either a collapseable UI section or tree component
 /// __img__     | Image to display inside the header on the left of the label
 /// __title__   | Label printed in the tree header
 /// __state__   | Initial tree state value out of nk_collapse_states
@@ -2903,7 +2903,7 @@ NK_API void nk_tree_pop(struct nk_context*);
 /// Parameter   | Description
 /// ------------|-----------------------------------------------------------
 /// __ctx__     | Must point to an previously initialized `nk_context` struct after calling `nk_tree_xxx_push_xxx`
-/// __type__    | Value from the nk_tree_type section to visually mark a tree node header as either a collapseable UI section or tree node
+/// __type__    | Value from the nk_tree_type section to visually mark a tree component header as either a collapseable UI section or tree component
 /// __title__   | Label printed in the tree header
 /// __state__   | Persistent state to update
 ///
@@ -2920,7 +2920,7 @@ NK_API int nk_tree_state_push(struct nk_context*, enum nk_tree_type, const char 
 /// ------------|-----------------------------------------------------------
 /// __ctx__     | Must point to an previously initialized `nk_context` struct after calling `nk_tree_xxx_push_xxx`
 /// __img__     | Image to display inside the header on the left of the label
-/// __type__    | Value from the nk_tree_type section to visually mark a tree node header as either a collapseable UI section or tree node
+/// __type__    | Value from the nk_tree_type section to visually mark a tree component header as either a collapseable UI section or tree component
 /// __title__   | Label printed in the tree header
 /// __state__   | Persistent state to update
 ///
@@ -10500,7 +10500,7 @@ struct nk_rp_context {
     struct nk_rp_node *active_head;
     struct nk_rp_node *free_head;
     struct nk_rp_node extra[2];
-    /* we allocate two extra nodes so optimal user-node-count is 'width' not 'width+2' */
+    /* we allocate two extra nodes so optimal user-component-count is 'width' not 'width+2' */
 };
 
 struct nk_rp__findresult {
@@ -10555,7 +10555,7 @@ nk_rp_init_target(struct nk_rp_context *context, int width, int height,
     context->num_nodes = num_nodes;
     nk_rp_setup_allow_out_of_mem(context, 0);
 
-    /* node 0 is the full width, node 1 is the sentinel (lets us not store width explicitly) */
+    /* component 0 is the full width, component 1 is the sentinel (lets us not store width explicitly) */
     context->extra[0].x = 0;
     context->extra[0].y = 0;
     context->extra[0].next = &context->extra[1];
@@ -10647,7 +10647,7 @@ nk_rp__skyline_find_best_pos(struct nk_rp_context *c, int width, int height)
     }
     best_x = (best == 0) ? 0 : (*best)->x;
 
-    /* if doing best-fit (BF), we also have to try aligning right edge to each node position */
+    /* if doing best-fit (BF), we also have to try aligning right edge to each component position */
     /* */
     /* e.g, if fitting */
     /* */
@@ -10668,7 +10668,7 @@ nk_rp__skyline_find_best_pos(struct nk_rp_context *c, int width, int height)
         tail = c->active_head;
         node = c->active_head;
         prev = &c->active_head;
-        /* find first node that's admissible */
+        /* find first component that's admissible */
         while (tail->x < width)
             tail = tail->next;
         while (tail)
@@ -10711,21 +10711,21 @@ nk_rp__skyline_pack_rectangle(struct nk_rp_context *context, int width, int heig
 
     /* bail if: */
     /*    1. it failed */
-    /*    2. the best node doesn't fit (we don't always check this) */
+    /*    2. the best component doesn't fit (we don't always check this) */
     /*    3. we're out of memory */
     if (res.prev_link == 0 || res.y + height > context->height || context->free_head == 0) {
         res.prev_link = 0;
         return res;
     }
 
-    /* on success, create new node */
+    /* on success, create new component */
     node = context->free_head;
     node->x = (nk_rp_coord) res.x;
     node->y = (nk_rp_coord) (res.y + height);
 
     context->free_head = node->next;
 
-    /* insert the new node into the right starting point, and */
+    /* insert the new component into the right starting point, and */
     /* let 'cur' point to the remaining nodes needing to be */
     /* stitched back in */
     cur = *res.prev_link;
@@ -10742,7 +10742,7 @@ nk_rp__skyline_pack_rectangle(struct nk_rp_context *context, int width, int heig
     /* that shouldn't be freed */
     while (cur->next && cur->next->x <= res.x + width) {
         struct nk_rp_node *next = cur->next;
-        /* move the current node to the free list */
+        /* move the current component to the free list */
         cur->next = context->free_head;
         context->free_head = cur;
         cur = next;
@@ -14608,7 +14608,7 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     button->draw_end        = 0;
     style->tab.tab_maximize_button =*button;
 
-    /* node button */
+    /* component button */
     button = &style->tab.node_minimize_button;
     nk_zero_struct(*button);
     button->normal          = nk_style_item_color(table[NK_COLOR_WINDOW]);
@@ -18239,7 +18239,7 @@ nk_tree_state_base(struct nk_context *ctx, enum nk_tree_type type,
         }
     } else text.background = style->window.background;
 
-    /* update node state */
+    /* update component state */
     in = (!(layout->flags & NK_WINDOW_ROM)) ? &ctx->input: 0;
     in = (in && widget_state == NK_WIDGET_VALID) ? &ctx->input : 0;
     if (nk_button_behavior(&ws, header, in, NK_BUTTON_DEFAULT))

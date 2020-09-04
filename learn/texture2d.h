@@ -21,7 +21,7 @@ struct Texture2d {
 void texture2d_cache_init();
 
 struct Texture2d* texture_create(const char *path);
-texture_retain(struct Texture2d* texture2d);
-texture_release(struct Texture2d* texture2d);
+void texture_retain(struct Texture2d* texture2d);
+void texture_release(struct Texture2d* texture2d);
 
 #endif //GLFW_TEXTURE2D_H

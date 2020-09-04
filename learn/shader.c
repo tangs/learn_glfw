@@ -5,6 +5,7 @@
 #include "shader.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #include "utils.h"
 
@@ -33,7 +34,7 @@ static int check_errors(unsigned int shader, enum ErrType type) {
 }
 
 static GLuint compile_shader(const char *path, GLenum type) {
-    char tmp[512];
+    char tmp[1024];
     int ret_code = read_file(path, tmp, sizeof(tmp));
     if (ret_code) {
         return 0;
@@ -49,6 +50,7 @@ static GLuint compile_shader(const char *path, GLenum type) {
 }
 
 int shader_init(struct Shader* shader, const char *vertex_path, const char *fragment_path) {
+    memset(shader, 0, sizeof(struct Shader));
     GLuint vertex_shader = compile_shader(vertex_path, GL_VERTEX_SHADER);
     if (!vertex_shader) {
         return 1;
@@ -90,6 +92,15 @@ void shader_set_int(struct Shader shader, const char *name, int value) {
 
 void shader_set_float(struct Shader shader, const char *name, float value) {
     glUniform1f(glGetUniformLocation(shader.id, name), value);
+}
+
+
+void shader_set_vec3(struct Shader shader, const char *name, vec3 value) {
+    glUniform3f(glGetUniformLocation(shader.id, name), value[0], value[1], value[2]);
+}
+
+void shader_set_vec4(struct Shader shader, const char *name, vec4 value) {
+    glUniform4f(glGetUniformLocation(shader.id, name), value[0], value[1], value[2], value[3]);
 }
 
 void shader_set_matrix(struct Shader shader, const char *name, mat4 value) {

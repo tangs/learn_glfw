@@ -22,57 +22,59 @@ static const int WIN_WIDTH = 1280;
 static const int WIN_HEIGHT = 720;
 
 static struct Shader shader_;
+static struct Shader shader_white_;
 
 static GLuint vbo_ = 0;
 static GLuint vao_ = 0;
-static GLuint ebo_ = 0;
+static GLuint light_vao_ = 0;
+//static GLuint ebo_ = 0;
 
 static struct Texture2d *texture1_;
 static struct Texture2d *texture2_;
 
 static float vertices_[] = {
-//     ---- 位置 ----         - 纹理坐标 -
-        -0.5f, -0.5f, -0.5f,    0.0f, 0.0f,             0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f,     0.333f, 0.0f,           1.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,     0.333f, 0.333f,         1.0f, 1.0f,
-        0.5f,  0.5f, -0.5f,     0.333f, 0.333f,         1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,    0.0f, 0.333f,           0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,    0.0f, 0.0f,             0.0f, 0.0f,
+//        ---- 位置 ----         -法向量-                - 纹理坐标 -
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,   0.0f,   0.0f,           0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,   0.333f, 0.0f,           1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,   0.333f, 0.333f,         1.0f, 1.0f,
+        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,   0.333f, 0.333f,         1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,   0.0f,   0.333f,         0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,   0.0f,   0.0f,           0.0f, 0.0f,
 
-        -0.5f, -0.5f,  0.5f,    0.333f, 0.0f,           0.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,     0.666f, 0.0f,           1.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,     0.666f, 0.333f,         1.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,     0.666f, 0.333f,         1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,    0.333f, 0.333f,         0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,    0.333f, 0.0f,           0.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,    0.333f, 0.0f,           0.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,    0.666f, 0.0f,           1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,    0.666f, 0.333f,         1.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,    0.666f, 0.333f,         1.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,    0.333f, 0.333f,         0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,    0.333f, 0.0f,           0.0f, 0.0f,
 
-        -0.5f,  0.5f,  0.5f,    1.0f, 0.0f,             1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,    1.0f, 0.333f,           1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,    0.666f, 0.333f,         0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,    0.666f, 0.333f,         0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,    0.666f, 0.0f,           0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,    1.0f, 0.0f,             1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,   1.0f,   0.0f,           1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,   1.0f,   0.333f,         1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,   0.666f, 0.333f,         0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,   0.666f, 0.333f,         0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,   0.666f, 0.0f,           0.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,   1.0f,   0.0f,           1.0f, 0.0f,
 
-        0.5f,  0.5f,  0.5f,     0.333f, 0.333f,         1.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,     0.333f, 0.666f,         1.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,     0.0f, 0.666f,           0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,     0.0f, 0.666f,           0.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,     0.0f, 0.333f,           0.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,     0.333f, 0.333f,         1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,   0.333f, 0.333f,         1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,   0.333f, 0.666f,         1.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,   0.0f,   0.666f,         0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,   0.0f,   0.666f,         0.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,   0.0f,   0.333f,         0.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,   0.333f, 0.333f,         1.0f, 0.0f,
 
-        -0.5f, -0.5f, -0.5f,    0.333f, 0.666f,         0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,     0.666f, 0.666f,         1.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,     0.666f, 0.333f,         1.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,     0.666f, 0.333f,         1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,    0.333f, 0.333f,         0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,    0.333f, 0.666f,         0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,   0.333f, 0.666f,         0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,   0.666f, 0.666f,         1.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,   0.666f, 0.333f,         1.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,   0.666f, 0.333f,         1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,   0.333f, 0.333f,         0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,   0.333f, 0.666f,         0.0f, 1.0f,
 
-        -0.5f,  0.5f, -0.5f,    0.666f, 0.666f,         0.0f, 1.0f,
-        0.5f,  0.5f, -0.5f,     1.0f, 0.666f,           1.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,     1.0f, 0.333f,           1.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,     1.0f, 0.333f,           1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,    0.666f, 0.333f,         0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,    0.666f, 0.666f,         0.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,   0.666f, 0.666f,         0.0f, 1.0f,
+        0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,   1.0f,   0.666f,         1.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,   1.0f,   0.333f,         1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,   1.0f,   0.333f,         1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,   0.666f, 0.333f,         0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,   0.666f, 0.666f,         0.0f, 1.0f,
 };
 
 unsigned int indices_[] = {
@@ -93,9 +95,12 @@ static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 }
 
 static void init_vao_data() {
+    glGenVertexArrays(1, &light_vao_);
+    glBindVertexArray(light_vao_);
+
     glGenVertexArrays(1, &vao_);
     glGenBuffers(1, &vbo_);
-    glGenBuffers(1, &ebo_);
+//    glGenBuffers(1, &ebo_);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo_);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_), vertices_, GL_STATIC_DRAW);
@@ -104,13 +109,15 @@ static void init_vao_data() {
 //    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices_), indices_, GL_STATIC_DRAW);
 
     glBindVertexArray(vao_);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(5 * sizeof(float)));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(6 * sizeof(float)));
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(8 * sizeof(float)));
 //    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(3);
 }
 
 static void init_image_data() {
@@ -125,6 +132,7 @@ static mat4 trans_;
 static mat4 projection_mat_;
 static mat4 model_mat_;
 static vec3 model_rot_ = (vec3){70.0f, 0.0f, 0.0f};
+static vec3 model_pos = (vec3){0.0f, 0.0f, 0.0f};
 
 
 static float last_x = WIN_WIDTH / 2;
@@ -174,22 +182,28 @@ static void process_input(GLFWwindow *window) {
     }
 
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        glm_rotate(model_mat_, glm_rad(-1.0f), (vec3){1.0f, 0.0f, 0.0f});
+        model_pos[1] += 0.05f;
+//        glm_rotate(model_mat_, glm_rad(-1.0f), (vec3){1.0f, 0.0f, 0.0f});
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        glm_rotate(model_mat_, glm_rad(1.0f), (vec3){1.0f, 0.0f, 0.0f});
+        model_pos[1] += -0.05f;
+//        glm_rotate(model_mat_, glm_rad(1.0f), (vec3){1.0f, 0.0f, 0.0f});
     }
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        glm_rotate(model_mat_, glm_rad(-1.0f), (vec3){0.0f, 1.0f, 0.0f});
+        model_pos[0] += -0.05f;
+//        glm_rotate(model_mat_, glm_rad(-1.0f), (vec3){0.0f, 1.0f, 0.0f});
     }
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        glm_rotate(model_mat_, glm_rad(1.0f), (vec3){0.0f, 1.0f, 0.0f});
+        model_pos[0] += 0.05f;
+//        glm_rotate(model_mat_, glm_rad(1.0f), (vec3){0.0f, 1.0f, 0.0f});
     }
     if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
-        glm_rotate(model_mat_, glm_rad(-1.0f), (vec3){0.0f, 0.0f, 1.0f});
+        model_pos[2] += 0.05f;
+//        glm_rotate(model_mat_, glm_rad(-1.0f), (vec3){0.0f, 0.0f, 1.0f});
     }
     if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
-        glm_rotate(model_mat_, glm_rad(1.0f), (vec3){0.0f, 0.0f, 1.0f});
+        model_pos[2] -= 0.05f;
+//        glm_rotate(model_mat_, glm_rad(1.0f), (vec3){0.0f, 0.0f, 1.0f});
     }
 }
 
@@ -220,24 +234,48 @@ static void update_mat() {
     glm_perspective(glm_rad(camera_.zoom), (float)WIN_WIDTH / WIN_HEIGHT,
                     0.1f, 100.0f, projection_mat_);
 
+    shader_use(shader_);
     shader_set_matrix(shader_, "view", view_mat);
     shader_set_matrix(shader_, "projection", projection_mat_);
+    shader_set_vec3(shader_, "lightColor", (vec3){1.0f, 1.0f, 1.0f});
+//    shader_set_vec3(shader_, "lightPos", cubePositions[0]);
+
+    shader_use(shader_white_);
+    shader_set_matrix(shader_white_, "view", view_mat);
+    shader_set_matrix(shader_white_, "projection", projection_mat_);
 }
 
 static void render() {
     update_mat();
     shader_use(shader_);
+//    shader_set_vec3(shader_, "lightColor",
+//                    (vec4){(float)(sin(glfwGetTime()) + 1.0f) / 2,
+//                            1.0f - (float)(sin(glfwGetTime()) + 1.0f) / 2,
+//                            0.0f});
 //    glActiveTexture(GL_TEXTURE0);
 //    glBindTexture(GL_TEXTURE_2D, texture1_->id);
 //    glActiveTexture(GL_TEXTURE1);
 //    glBindTexture(GL_TEXTURE_2D, texture2_->id);
 //    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
 
-    for (int i = 0; i < sizeof(cubePositions) / sizeof(cubePositions[0]); ++i) {
+    int len = sizeof(cubePositions) / sizeof(cubePositions[0]);
+    for (int i = 0; i < len; ++i) {
         mat4 model_mat;
-        glm_translate_to(model_mat_, cubePositions[i], model_mat);
-        if (i) glm_rotate(model_mat, glm_rad((int)(glfwGetTime() * 250) % 360), cubeRotAis[i]);
-        shader_set_matrix(shader_, "model", model_mat);
+        vec3 pos;
+        glm_vec3_copy(cubePositions[i], pos);
+        if (i == 0) {
+            glm_vec3_add(pos, model_pos, pos);
+            shader_set_vec3(shader_, "lightPos", pos);
+        }
+        glm_translate_to(model_mat_, pos, model_mat);
+//        if (i) glm_rotate(model_mat, glm_rad((int)(glfwGetTime() * 250) % 360), cubeRotAis[i]);
+        if (i != 0) {
+            shader_use(shader_);
+            shader_set_matrix(shader_, "model", model_mat);
+        } else {
+            shader_use(shader_white_);
+            shader_set_matrix(shader_white_, "model", model_mat);
+        }
         glDrawArrays(GL_TRIANGLES, 0, 36);
     }
 }
@@ -249,7 +287,7 @@ int main() {
     glm_mat4_identity(model_mat_);
 //    glm_mat4_identity(view_mat_);
 
-    glm_perspective(glm_rad(45.0f), (float)WIN_WIDTH / WIN_HEIGHT,
+    glm_perspective(glm_rad(45.0f), (float)WIN_WIDTH / (float)WIN_HEIGHT,
                     0.1f, 100.0f, projection_mat_);
     glm_rotate(model_mat_, glm_rad(-55.0f), (vec3){1.0f, 0.0f, 0.0f});
 
@@ -286,6 +324,12 @@ int main() {
         return -3;
     }
 
+    if (shader_init(&shader_white_,
+                    "../Shaders/pos_col_vertex_img.shader",
+                    "../Shaders/pos_col_frag_white.shader")) {
+        return -4;
+    }
+
     // init VAO
     init_vao_data();
     init_image_data();
@@ -294,6 +338,7 @@ int main() {
     shader_set_int(shader_, "texture1", 0);
     shader_set_int(shader_, "texture2", 1);
     shader_set_float(shader_, "mixValue", 0.5f);
+    shader_set_vec3(shader_, "lightColor", (vec4){0.0f, 1.0f, 0.0f});
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     glfwSetCursorPosCallback(window, mouse_callback);
@@ -307,7 +352,7 @@ int main() {
     glBindTexture(GL_TEXTURE_2D, texture1_->id);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, texture2_->id);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
+//    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
 
     last_frame_time_ = glfwGetTime();
     while (!glfwWindowShouldClose(window)) {
@@ -328,7 +373,7 @@ int main() {
 
     glDeleteVertexArrays(1, &vao_);
     glDeleteBuffers(1, &vbo_);
-    glDeleteBuffers(1, &ebo_);
+//    glDeleteBuffers(1, &ebo_);
 
     glfwTerminate();
     return 0;
