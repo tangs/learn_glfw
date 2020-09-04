@@ -444,6 +444,7 @@ int main() {
     glDeleteBuffers(1, &vbo_);
 //    glDeleteBuffers(1, &ebo_);
 
+    nk_glfw3_shutdown();
     glfwTerminate();
     return 0;
 }
