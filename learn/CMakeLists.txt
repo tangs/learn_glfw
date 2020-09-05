@@ -5,6 +5,9 @@ include_directories("${GLFW_SOURCE_DIR}/deps")
 
 link_directories(/usr/local/lib)
 
+link_directories(/usr/local/Cellar/assimp/5.0.1/lib)
+include_directories(/usr/local/Cellar/assimp/5.0.1/include)
+
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GLIB_PKG glib-2.0)
 
@@ -70,10 +73,10 @@ add_executable(learn_opengl_3 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS
                learn3.c utils.c)
 add_executable(learn_opengl_4 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS} ${STB} ${IMAGES}
                learn4.c utils.c camera.c shader.c texture2d.c
-               component/transform.c component/image.c)
+               component/transform.c component/image.c data/mesh.c data/mesh.h data/model.c data/model.h)
 
 target_link_libraries(learn_opengl_3 PRIVATE cglm)
-target_link_libraries(learn_opengl_4 PRIVATE cglm glib-2.0)
+target_link_libraries(learn_opengl_4 PRIVATE cglm glib-2.0 assimp)
 
 set(GUI_ONLY_BINARIES learn_opengl_1)
 set(CONSOLE_BINARIES offscreen)
