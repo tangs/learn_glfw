@@ -145,34 +145,50 @@ static mat4 trans_;
 static mat4 projection_mat_;
 static mat4 model_mat_;
 static vec3 model_rot_ = (vec3){70.0f, 0.0f, 0.0f};
-static vec3 model_pos = (vec3){0.0f, 0.0f, 0.0f};
+static vec3 model_pos_ = (vec3){0.0f, 0.0f, 0.0f};
 
 
-static float last_x = WIN_WIDTH / 2;
-static float last_y = WIN_HEIGHT / 2;
-static bool first_mouse = true;
+static float last_x_ = WIN_WIDTH / 2;
+static float last_y_ = WIN_HEIGHT / 2;
+static bool first_mouse_ = true;
 
 static struct Camera camera_;
+
+// camera movable
+static bool movable_ = false;
+static struct nk_colorf light_color_ = {1.0f, 1.0f, 0.0f, 1.0f};
 
 static void scroll_callback(GLFWwindow* window, double x_offset, double y_offset) {
     camera_process_mouse_scroll(&camera_, y_offset);
 }
 
 static void mouse_callback(GLFWwindow* window, double x_pos, double y_pos) {
-    if (first_mouse) {
-        last_x = x_pos;
-        last_y = y_pos;
-        first_mouse = false;
+    if (first_mouse_) {
+        last_x_ = x_pos;
+        last_y_ = y_pos;
+        first_mouse_ = false;
     }
-    float x_offset = x_pos - last_x;
-    float y_offset = y_pos - last_y;
-    last_x = x_pos;
-    last_y = y_pos;
+    float x_offset = x_pos - last_x_;
+    float y_offset = y_pos - last_y_;
+    last_x_ = x_pos;
+    last_y_ = y_pos;
 
-    camera_process_mouse_movement(&camera_, x_offset, y_offset, true);
+    if (movable_)
+        camera_process_mouse_movement(&camera_, x_offset, y_offset, true);
 }
 
+static bool space_pressed_ = false;
 static void process_input(GLFWwindow *window) {
+
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        if (!space_pressed_) {
+            movable_ = !movable_;
+        }
+        space_pressed_ = true;
+    } else if (space_pressed_) {
+//        movable_ = !movable_;
+        space_pressed_ = false;
+    }
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         camera_process_keyboard(&camera_, FORWARD, delta_time_);
@@ -195,27 +211,27 @@ static void process_input(GLFWwindow *window) {
     }
 
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        model_pos[1] += 0.05f;
+        model_pos_[1] += 0.05f;
 //        glm_rotate(model_mat_, glm_rad(-1.0f), (vec3){1.0f, 0.0f, 0.0f});
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        model_pos[1] += -0.05f;
+        model_pos_[1] += -0.05f;
 //        glm_rotate(model_mat_, glm_rad(1.0f), (vec3){1.0f, 0.0f, 0.0f});
     }
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        model_pos[0] += -0.05f;
+        model_pos_[0] += -0.05f;
 //        glm_rotate(model_mat_, glm_rad(-1.0f), (vec3){0.0f, 1.0f, 0.0f});
     }
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        model_pos[0] += 0.05f;
+        model_pos_[0] += 0.05f;
 //        glm_rotate(model_mat_, glm_rad(1.0f), (vec3){0.0f, 1.0f, 0.0f});
     }
     if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
-        model_pos[2] += 0.05f;
+        model_pos_[2] += 0.05f;
 //        glm_rotate(model_mat_, glm_rad(-1.0f), (vec3){0.0f, 0.0f, 1.0f});
     }
     if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
-        model_pos[2] -= 0.05f;
+        model_pos_[2] -= 0.05f;
 //        glm_rotate(model_mat_, glm_rad(1.0f), (vec3){0.0f, 0.0f, 1.0f});
     }
 }
@@ -250,12 +266,13 @@ static void update_mat() {
     shader_use(shader_);
     shader_set_matrix(shader_, "view", view_mat);
     shader_set_matrix(shader_, "projection", projection_mat_);
-    shader_set_vec3(shader_, "lightColor", (vec3){1.0f, 1.0f, 0.0f});
+    shader_set_vec3(shader_, "lightColor", (vec3){light_color_.r, light_color_.g, light_color_.b});
 //    shader_set_vec3(shader_, "lightPos", cubePositions[0]);
 
     shader_use(shader_white_);
     shader_set_matrix(shader_white_, "view", view_mat);
     shader_set_matrix(shader_white_, "projection", projection_mat_);
+    shader_set_vec4(shader_white_, "color", (vec4){light_color_.r, light_color_.g, light_color_.b, light_color_.a});
 }
 
 static void render() {
@@ -273,7 +290,7 @@ static void render() {
         vec3 pos;
         glm_vec3_copy(cubePositions[i], pos);
         if (i == 0) {
-            glm_vec3_add(pos, model_pos, pos);
+            glm_vec3_add(pos, model_pos_, pos);
             shader_set_vec3(shader_, "lightPos", pos);
         }
         glm_translate_to(model_mat_, pos, model_mat);
@@ -291,7 +308,78 @@ static void render() {
 
 #define MAX_VERTEX_BUFFER 512 * 1024
 #define MAX_ELEMENT_BUFFER 128 * 1024
-static struct nk_context *ctx;
+static struct nk_context *nk_ctx_;
+static struct nk_colorf bg_;
+
+void init_gui(GLFWwindow *window) {
+    nk_ctx_ = nk_glfw3_init(window, NK_GLFW3_DEFAULT);
+    {struct nk_font_atlas *atlas;
+        nk_glfw3_font_stash_begin(&atlas);
+        /*struct nk_font *droid = nk_font_atlas_add_from_file(atlas, "../../../extra_font/DroidSans.ttf", 14, 0);*/
+        /*struct nk_font *roboto = nk_font_atlas_add_from_file(atlas, "../../../extra_font/Roboto-Regular.ttf", 14, 0);*/
+        /*struct nk_font *future = nk_font_atlas_add_from_file(atlas, "../../../extra_font/kenvector_future_thin.ttf", 13, 0);*/
+        /*struct nk_font *clean = nk_font_atlas_add_from_file(atlas, "../../../extra_font/ProggyClean.ttf", 12, 0);*/
+        /*struct nk_font *tiny = nk_font_atlas_add_from_file(atlas, "../../../extra_font/ProggyTiny.ttf", 10, 0);*/
+        /*struct nk_font *cousine = nk_font_atlas_add_from_file(atlas, "../../../extra_font/Cousine-Regular.ttf", 13, 0);*/
+        nk_glfw3_font_stash_end();
+        /*nk_style_load_all_cursors(ctx, atlas->cursors);*/
+        /*nk_style_set_font(ctx, &droid->handle);*/}
+}
+
+void update_gui() {/* GUI */
+    if (nk_begin(nk_ctx_, "update", nk_rect(50, 50, 230, 280),
+                 NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_SCALABLE|
+                 NK_WINDOW_MINIMIZABLE|NK_WINDOW_TITLE))
+    {
+        static int property = 20;
+        char tmp[256];
+        snprintf(tmp, sizeof(tmp), "fps:%f", 1.0f / delta_time_);
+        nk_layout_row_dynamic(nk_ctx_, 30, 1);
+        nk_label(nk_ctx_, tmp, NK_TEXT_LEFT);
+
+        nk_layout_row_static(nk_ctx_, 30, 120, 1);
+        if (nk_button_label(nk_ctx_, "reset camera")) {
+//            fprintf(stdout, "button pressed\n");
+            camera_set_euler_angle(&camera_, -90.0f, 0.0f);
+        }
+
+        nk_layout_row_dynamic(nk_ctx_, 30, 2);
+        movable_ = nk_check_label(nk_ctx_, "movable", movable_);
+
+        nk_layout_row_dynamic(nk_ctx_, 25, 1);
+        nk_property_int(nk_ctx_, "Compression:", 0, &property, 100, 10, 1);
+
+        nk_layout_row_dynamic(nk_ctx_, 20, 1);
+        nk_label(nk_ctx_, "background:", NK_TEXT_LEFT);
+        nk_layout_row_dynamic(nk_ctx_, 25, 1);
+        if (nk_combo_begin_color(nk_ctx_, nk_rgb_cf((bg_)), nk_vec2(nk_widget_width(nk_ctx_), 400))) {
+            nk_layout_row_dynamic(nk_ctx_, 120, 1);
+            bg_ = nk_color_picker(nk_ctx_, bg_, NK_RGBA);
+            nk_layout_row_dynamic(nk_ctx_, 25, 1);
+            bg_.r = nk_propertyf(nk_ctx_, "#R:", 0, bg_.r, 1.0f, 0.01f, 0.005f);
+            bg_.g = nk_propertyf(nk_ctx_, "#G:", 0, bg_.g, 1.0f, 0.01f, 0.005f);
+            bg_.b = nk_propertyf(nk_ctx_, "#B:", 0, bg_.b, 1.0f, 0.01f, 0.005f);
+            bg_.a = nk_propertyf(nk_ctx_, "#A:", 0, bg_.a, 1.0f, 0.01f, 0.005f);
+            nk_combo_end(nk_ctx_);
+        }
+
+        nk_layout_row_dynamic(nk_ctx_, 20, 1);
+        nk_label(nk_ctx_, "light color:", NK_TEXT_LEFT);
+        nk_layout_row_dynamic(nk_ctx_, 25, 1);
+        if (nk_combo_begin_color(nk_ctx_, nk_rgb_cf((light_color_)), nk_vec2(nk_widget_width(nk_ctx_), 400))) {
+            nk_layout_row_dynamic(nk_ctx_, 120, 1);
+            light_color_ = nk_color_picker(nk_ctx_, light_color_, NK_RGBA);
+            nk_layout_row_dynamic(nk_ctx_, 25, 1);
+            light_color_.r = nk_propertyf(nk_ctx_, "#R:", 0, light_color_.r, 1.0f, 0.01f, 0.005f);
+            light_color_.g = nk_propertyf(nk_ctx_, "#G:", 0, light_color_.g, 1.0f, 0.01f, 0.005f);
+            light_color_.b = nk_propertyf(nk_ctx_, "#B:", 0, light_color_.b, 1.0f, 0.01f, 0.005f);
+            light_color_.a = nk_propertyf(nk_ctx_, "#A:", 0, light_color_.a, 1.0f, 0.01f, 0.005f);
+            nk_combo_end(nk_ctx_);
+        }
+    }
+    nk_end(nk_ctx_);
+}
+
 int main() {
     texture2d_cache_init();
     camera_init(&camera_, (vec3){0.0f, 0.0f, 10.0f}, (vec3){0.0f, 1.0f,  0.0f}, -90.0f, 0.0f);
@@ -337,7 +425,7 @@ int main() {
 
     if (shader_init(&shader_white_,
                     "../Shaders/pos_col_vertex_img.shader",
-                    "../Shaders/pos_col_frag_white.shader")) {
+                    "../Shaders/pos_col_frag_col4.shader")) {
         return -4;
     }
 
@@ -359,22 +447,7 @@ int main() {
 //    glEnable(GL_BLEND);
 //    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-
-//    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
-
-    ctx = nk_glfw3_init(window, NK_GLFW3_DEFAULT);
-    {struct nk_font_atlas *atlas;
-        nk_glfw3_font_stash_begin(&atlas);
-        /*struct nk_font *droid = nk_font_atlas_add_from_file(atlas, "../../../extra_font/DroidSans.ttf", 14, 0);*/
-        /*struct nk_font *roboto = nk_font_atlas_add_from_file(atlas, "../../../extra_font/Roboto-Regular.ttf", 14, 0);*/
-        /*struct nk_font *future = nk_font_atlas_add_from_file(atlas, "../../../extra_font/kenvector_future_thin.ttf", 13, 0);*/
-        /*struct nk_font *clean = nk_font_atlas_add_from_file(atlas, "../../../extra_font/ProggyClean.ttf", 12, 0);*/
-        /*struct nk_font *tiny = nk_font_atlas_add_from_file(atlas, "../../../extra_font/ProggyTiny.ttf", 10, 0);*/
-        /*struct nk_font *cousine = nk_font_atlas_add_from_file(atlas, "../../../extra_font/Cousine-Regular.ttf", 13, 0);*/
-        nk_glfw3_font_stash_end();
-        /*nk_style_load_all_cursors(ctx, atlas->cursors);*/
-        /*nk_style_set_font(ctx, &droid->handle);*/}
-    struct nk_colorf bg;
+    init_gui(window);
 
     last_frame_time_ = glfwGetTime();
     while (!glfwWindowShouldClose(window)) {
@@ -385,48 +458,14 @@ int main() {
         glfwPollEvents();
         process_input(window);
 
-        glClearColor(bg.r, bg.g, bg.b, bg.a);
+        glClearColor(bg_.r, bg_.g, bg_.b, bg_.a);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         nk_glfw3_new_frame();
-        /* GUI */
-        if (nk_begin(ctx, "game", nk_rect(50, 50, 230, 250),
-                     NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_SCALABLE|
-                     NK_WINDOW_MINIMIZABLE|NK_WINDOW_TITLE))
-        {
-            enum {EASY, HARD};
-            static int op = EASY;
-            static int property = 20;
-            nk_layout_row_static(ctx, 30, 80, 1);
-            if (nk_button_label(ctx, "button"))
-                fprintf(stdout, "button pressed\n");
-
-            nk_layout_row_dynamic(ctx, 30, 2);
-            if (nk_option_label(ctx, "easy", op == EASY)) op = EASY;
-            if (nk_option_label(ctx, "hard", op == HARD)) op = HARD;
-
-            nk_layout_row_dynamic(ctx, 25, 1);
-            nk_property_int(ctx, "Compression:", 0, &property, 100, 10, 1);
-
-            nk_layout_row_dynamic(ctx, 20, 1);
-            nk_label(ctx, "background:", NK_TEXT_LEFT);
-            nk_layout_row_dynamic(ctx, 25, 1);
-            if (nk_combo_begin_color(ctx, nk_rgb_cf(bg), nk_vec2(nk_widget_width(ctx),400))) {
-                nk_layout_row_dynamic(ctx, 120, 1);
-                bg = nk_color_picker(ctx, bg, NK_RGBA);
-                nk_layout_row_dynamic(ctx, 25, 1);
-                bg.r = nk_propertyf(ctx, "#R:", 0, bg.r, 1.0f, 0.01f,0.005f);
-                bg.g = nk_propertyf(ctx, "#G:", 0, bg.g, 1.0f, 0.01f,0.005f);
-                bg.b = nk_propertyf(ctx, "#B:", 0, bg.b, 1.0f, 0.01f,0.005f);
-                bg.a = nk_propertyf(ctx, "#A:", 0, bg.a, 1.0f, 0.01f,0.005f);
-                nk_combo_end(ctx);
-            }
-        }
-        nk_end(ctx);
+        update_gui();
 
         glEnable(GL_DEPTH_TEST);
         render();
-
         nk_glfw3_render(NK_ANTI_ALIASING_ON, MAX_VERTEX_BUFFER, MAX_ELEMENT_BUFFER);
 
         glfwSwapBuffers(window);
@@ -435,7 +474,6 @@ int main() {
 
     glDeleteVertexArrays(1, &vao_);
     glDeleteBuffers(1, &vbo_);
-//    glDeleteBuffers(1, &ebo_);
 
     nk_glfw3_shutdown();
     glfwTerminate();

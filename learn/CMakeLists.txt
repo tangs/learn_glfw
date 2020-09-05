@@ -53,6 +53,7 @@ set(TINYCTHREAD "${GLFW_SOURCE_DIR}/deps/tinycthread.h"
                 "${GLFW_SOURCE_DIR}/deps/tinycthread.c")
 set(STB "${GLFW_SOURCE_DIR}/deps/stb/stb_image.h")
 set(SHADERS "${GLFW_SOURCE_DIR}/shaders/pos_col_frag.shader"
+            "${GLFW_SOURCE_DIR}/shaders/pos_col_frag_col4.shader"
             "${GLFW_SOURCE_DIR}/shaders/pos_col_frag_img.shader"
             "${GLFW_SOURCE_DIR}/shaders/pos_col_frag_white.shader"
             "${GLFW_SOURCE_DIR}/shaders/pos_col_vertex.shader"

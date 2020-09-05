@@ -43,5 +43,6 @@ void camera_get_view_matrix(struct Camera *camera, mat4 dest);
 void camera_process_keyboard(struct Camera *camera, enum CameraMovement direction, float delta_time);
 void camera_process_mouse_movement(struct Camera *camera, float x_offset, float y_offset, bool constrain_pitch);
 void camera_process_mouse_scroll(struct Camera *camera, float y_offset);
+void camera_set_euler_angle(struct Camera *camera, float yaw, float pitch);
 
 #endif //GLFW_CAMERA_H
