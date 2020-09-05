@@ -181,12 +181,9 @@ static bool space_pressed_ = false;
 static void process_input(GLFWwindow *window) {
 
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-        if (!space_pressed_) {
-            movable_ = !movable_;
-        }
+        if (!space_pressed_) movable_ = !movable_;
         space_pressed_ = true;
     } else if (space_pressed_) {
-//        movable_ = !movable_;
         space_pressed_ = false;
     }
 
