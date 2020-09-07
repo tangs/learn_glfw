@@ -6,7 +6,11 @@ include_directories("${GLFW_SOURCE_DIR}/deps")
 link_directories(/usr/local/lib)
 
 link_directories(/usr/local/Cellar/assimp/5.0.1/lib)
+link_directories(/usr/local/Cellar/assimp/5.0.0/lib)
+link_directories(/usr/local/Cellar/glib/2.62.2/lib)
 include_directories(/usr/local/Cellar/assimp/5.0.1/include)
+include_directories(/usr/local/Cellar/assimp/5.0.0/include)
+include_directories(/usr/local/Cellar/glib/2.62.2/include)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GLIB_PKG glib-2.0)
@@ -65,13 +69,34 @@ set(IMAGES  "${GLFW_SOURCE_DIR}/res/p1tank.png"
             "${GLFW_SOURCE_DIR}/res/awesomface.png"
             "${GLFW_SOURCE_DIR}/res/tuichu.png"
             "${GLFW_SOURCE_DIR}/res/cube_met.png")
+set(NANOSUIT    "${GLFW_SOURCE_DIR}/res/nanosuit/LICENSE.txt"
+                "${GLFW_SOURCE_DIR}/res/nanosuit/arm_dif.png"
+                "${GLFW_SOURCE_DIR}/res/nanosuit/arm_showroom_ddn.png"
+                "${GLFW_SOURCE_DIR}/res/nanosuit/arm_showroom_spec.png"
+                "${GLFW_SOURCE_DIR}/res/nanosuit/body_dif.png"
+                "${GLFW_SOURCE_DIR}/res/nanosuit/body_showroom_ddn.png"
+                "${GLFW_SOURCE_DIR}/res/nanosuit/body_showroom_spec.png"
+                "${GLFW_SOURCE_DIR}/res/nanosuit/glass_ddn.png"
+                "${GLFW_SOURCE_DIR}/res/nanosuit/glass_dif.png"
+                "${GLFW_SOURCE_DIR}/res/nanosuit/hand_dif.png"
+                "${GLFW_SOURCE_DIR}/res/nanosuit/hand_showroom_ddn.png"
+                "${GLFW_SOURCE_DIR}/res/nanosuit/hand_showroom_spec.png"
+                "${GLFW_SOURCE_DIR}/res/nanosuit/helmet_diff.png"
+                "${GLFW_SOURCE_DIR}/res/nanosuit/helmet_showroom_ddn.png"
+                "${GLFW_SOURCE_DIR}/res/nanosuit/helmet_showroom_spec.png"
+                "${GLFW_SOURCE_DIR}/res/nanosuit/leg_dif.png"
+                "${GLFW_SOURCE_DIR}/res/nanosuit/leg_showroom_ddn.png"
+                "${GLFW_SOURCE_DIR}/res/nanosuit/leg_showroom_spec.png"
+                "${GLFW_SOURCE_DIR}/res/nanosuit/nanosuit.blend"
+                "${GLFW_SOURCE_DIR}/res/nanosuit/nanosuit.obj1"
+                "${GLFW_SOURCE_DIR}/res/nanosuit/nanosuit.mtl")
 
 add_executable(learn_opengl_1 WIN32 MACOSX_BUNDLE learn.c ${ICON} ${GLAD_GLAD})
 add_executable(learn_opengl_2 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS} ${STB} ${IMAGES}
                learn2.c utils.c)
 add_executable(learn_opengl_3 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS} ${STB} ${IMAGES}
                learn3.c utils.c)
-add_executable(learn_opengl_4 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS} ${STB} ${IMAGES}
+add_executable(learn_opengl_4 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS} ${STB} ${IMAGES} ${NANOSUIT}
                learn4.c utils.c camera.c shader.c texture2d.c
                component/transform.c component/image.c data/mesh.c data/mesh.h data/model.c data/model.h)
 
@@ -94,6 +119,7 @@ if (APPLE)
     set_target_properties(learn_opengl_4 PROPERTIES MACOSX_BUNDLE_BUNDLE_NAME "learn_opengl_4")
 
     set_source_files_properties(glfw.icns ${IMAGES} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    set_source_files_properties(glfw.icns ${NANOSUIT} PROPERTIES MACOSX_PACKAGE_LOCATION "nanosuit")
 
     set_source_files_properties(${SHADERS} PROPERTIES MACOSX_PACKAGE_LOCATION "Shaders")
 

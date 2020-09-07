@@ -18,8 +18,9 @@ struct aiScene;
 enum aiTextureType;
 
 struct Model {
-    GList *mesh_head;
-    size_t meshes_len;
+//    GList *mesh_head;
+//    size_t meshes_len;
+    GArray *meshes;
     char *directory;
 };
 

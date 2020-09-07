@@ -20,7 +20,8 @@ struct Vertex {
 
 struct Texture {
     GLuint id;
-    char *type;
+    const char *type;
+    const char *path;
 };
 
 struct Mesh {
@@ -32,8 +33,8 @@ struct Mesh {
     GLuint ebo;
 };
 
-void mesh_init(struct Mesh *mesh);
-struct Mesh* mesh_create();
+void mesh_init(struct Mesh *mesh, size_t num_vertexes, size_t num_indices, size_t num_textures);
+struct Mesh* mesh_create(size_t num_vertexes, size_t num_indices, size_t num_textures);
 void mesh_free(struct Mesh *mesh);
 void mesh_draw(struct Mesh *mesh, struct Shader shader);
 

@@ -34,18 +34,18 @@ static void mesh_setup(struct Mesh *mesh) {
     glBindVertexArray(0);
 }
 
-void mesh_init(struct Mesh *mesh) {
+void mesh_init(struct Mesh *mesh, size_t num_vertexes, size_t num_indices, size_t num_textures) {
     memset(mesh, 0, sizeof(*mesh));
-    mesh->vertices = g_array_new(FALSE, FALSE, sizeof(struct Vertex));
+    mesh->vertices = g_array_sized_new(FALSE, FALSE, sizeof(struct Vertex), num_vertexes);
     // TODO
-    mesh->indices = g_array_new(FALSE, FALSE, sizeof(struct Texture));
-    mesh->textures = g_array_new(FALSE, FALSE, sizeof(struct Texture));
+    mesh->indices = g_array_sized_new(FALSE, FALSE, sizeof(struct Texture), num_indices);
+    mesh->textures = g_array_sized_new(FALSE, FALSE, sizeof(struct Texture), num_textures);
     mesh_setup(mesh);
 }
 
-struct Mesh* mesh_create() {
+struct Mesh* mesh_create(size_t num_vertexes, size_t num_indices, size_t num_textures) {
     struct Mesh *mesh = malloc(sizeof(struct Mesh));
-    mesh_init(mesh);
+    mesh_init(mesh, num_vertexes, num_indices, num_textures);
     return mesh;
 }
 
@@ -64,7 +64,9 @@ void mesh_draw(struct Mesh *mesh, struct Shader shader) {
     char material[256];
     for (size_t i = 0; i < g_array_get_element_size(mesh->textures); ++i) {
         glActiveTexture(GL_TEXTURE0 + i);
-        const char *type = ((struct Texture*)(mesh->textures[i].data))->type;
+//        const char *type = ((struct Texture*)(mesh->textures[i].data))->type;
+        struct Texture *texture = &g_array_index(mesh->textures, struct Texture, i);
+        const char *type = texture->type;
         GLuint number;
         if (!strcmp(type, "texture_diffuse"))
             number = diffuse_nr++;

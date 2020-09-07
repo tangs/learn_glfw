@@ -14,6 +14,8 @@
 #include "shader.h"
 #include "texture2d.h"
 
+#include "data/model.h"
+
 #define NK_INCLUDE_FIXED_TYPES
 #define NK_INCLUDE_STANDARD_IO
 #define NK_INCLUDE_STANDARD_VARARGS
@@ -44,6 +46,8 @@ static GLuint light_vao_ = 0;
 
 static struct Texture2d *texture1_;
 static struct Texture2d *texture2_;
+
+static struct Model model_;
 
 static float vertices_[] = {
 //        ---- 位置 ----         -法向量-                - 纹理坐标 -
@@ -301,6 +305,7 @@ static void render() {
         }
         glDrawArrays(GL_TRIANGLES, 0, 36);
     }
+    model_draw(&model_, shader_);
 }
 
 #define MAX_VERTEX_BUFFER 512 * 1024
@@ -378,6 +383,8 @@ void update_gui() {/* GUI */
 }
 
 int main() {
+    model_init(&model_);
+    model_load(&model_, "../nanosuit/nanosuit.obj1");
     texture2d_cache_init();
     camera_init(&camera_, (vec3){0.0f, 0.0f, 10.0f}, (vec3){0.0f, 1.0f,  0.0f}, -90.0f, 0.0f);
     glm_mat4_identity(projection_mat_);
