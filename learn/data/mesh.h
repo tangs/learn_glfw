@@ -5,6 +5,8 @@
 #ifndef GLFW_MESH_H
 #define GLFW_MESH_H
 
+#include <glib.h>
+
 #include <cglm/cglm.h>
 #include <glad/glad.h>
 
@@ -22,19 +24,17 @@ struct Texture {
 };
 
 struct Mesh {
-    struct Vertex *vertices;
-    size_t vertices_len;
-    GLuint *indices;
-    size_t indices_len;
-    struct Texture *textures;
-    size_t textures_len;
+    GArray *vertices;
+    GArray *indices;
+    GArray *textures;
     GLuint vao;
     GLuint vbo;
     GLuint ebo;
 };
 
-void mesh_init(struct Mesh *mesh, struct Vertex *vertices, size_t vertices_len, GLuint *indices,
-               size_t indices_len, struct Texture *textures, size_t textures_len);
-void mesh_draw(struct Mesh *mesh, struct Shader *shader);
+void mesh_init(struct Mesh *mesh);
+struct Mesh* mesh_create();
+void mesh_free(struct Mesh *mesh);
+void mesh_draw(struct Mesh *mesh, struct Shader shader);
 
 #endif //GLFW_MESH_H
