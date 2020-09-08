@@ -145,6 +145,8 @@ static void init_vao_data() {
 static void init_image_data() {
     texture1_ = texture_create("cube_met.png");
     texture2_ = texture_create("awesomface.png");
+    // TODO test code.
+    texture2_->id = 6;
     texture_retain(texture1_);
     texture_retain(texture2_);
 }
@@ -512,6 +514,7 @@ int main() {
 
 //        glEnable(GL_BLEND);
 //        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
         glEnable(GL_DEPTH_TEST);
         render();
 

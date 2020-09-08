@@ -13,8 +13,6 @@
 #include "../utils/image_loader.h"
 
 static GLuint texture_fromfile(const char *filename, const char* directory, bool gamma) {
-    //string filename = string(path);
-    //filename = directory + '/' + filename;
     char path[512];
     snprintf(path, sizeof(path), "%s/%s", directory, filename);
     GLuint texture_id = 0;
@@ -45,6 +43,7 @@ static GLuint texture_fromfile(const char *filename, const char* directory, bool
         fprintf(stderr, "Texture failed to load at path: %s\n", path);
         image_loader_image_free(data);
     }
+//    printf("path:%s, %d\n", path, texture_id);
     return texture_id;
 }
 
@@ -123,16 +122,16 @@ struct Mesh* model_process_mesh(struct Model *model, struct aiMesh *mesh, const 
         struct Vertex vertex;
         memset(&vertex, 0, sizeof(vertex));
 
-        glm_vec3_copy(&mesh->mVertices[i], vertex.position);
+        glm_vec3_copy((float*)&mesh->mVertices[i], vertex.position);
 
         if (mesh->mNormals) {
-            glm_vec3_copy(&mesh->mNormals[i], vertex.normal);
+            glm_vec3_copy((float*)&mesh->mNormals[i], vertex.normal);
         }
         if (mesh->mTextureCoords[0]) {
-            glm_vec2_copy(&mesh->mTextureCoords[0][i], vertex.tex_coords);
+            glm_vec2_copy((float*)&mesh->mTextureCoords[0][i], vertex.tex_coords);
 
-            glm_vec3_copy(&mesh->mTangents[i], vertex.tangent);
-            glm_vec3_copy(&mesh->mBitangents[i], vertex.bitangent);
+            glm_vec3_copy((float*)&mesh->mTangents[i], vertex.tangent);
+            glm_vec3_copy((float*)&mesh->mBitangents[i], vertex.bitangent);
         }
         g_array_append_val(dest_mesh->vertices, vertex);
     }
