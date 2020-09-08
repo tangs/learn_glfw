@@ -16,6 +16,8 @@ struct Vertex {
     vec3 position;
     vec3 normal;
     vec2 tex_coords;
+    vec3 tangent;
+    vec3 bitangent;
 };
 
 struct Texture {
@@ -32,7 +34,7 @@ struct Mesh {
     GLuint vbo;
     GLuint ebo;
 };
-
+void mesh_setup(struct Mesh *mesh);
 void mesh_init(struct Mesh *mesh, size_t num_vertexes, size_t num_indices, size_t num_textures);
 struct Mesh* mesh_create(size_t num_vertexes, size_t num_indices, size_t num_textures);
 void mesh_free(struct Mesh *mesh);

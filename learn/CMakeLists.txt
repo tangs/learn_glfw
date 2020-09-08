@@ -64,7 +64,9 @@ set(SHADERS "${GLFW_SOURCE_DIR}/shaders/pos_col_frag.shader"
             "${GLFW_SOURCE_DIR}/shaders/pos_col_frag_img.shader"
             "${GLFW_SOURCE_DIR}/shaders/pos_col_frag_white.shader"
             "${GLFW_SOURCE_DIR}/shaders/pos_col_vertex.shader"
-            "${GLFW_SOURCE_DIR}/shaders/pos_col_vertex_img.shader")
+            "${GLFW_SOURCE_DIR}/shaders/pos_col_vertex_img.shader"
+            "${GLFW_SOURCE_DIR}/shaders/1.model_loading.vs"
+            "${GLFW_SOURCE_DIR}/shaders/1.model_loading.fs")
 set(IMAGES  "${GLFW_SOURCE_DIR}/res/p1tank.png"
             "${GLFW_SOURCE_DIR}/res/awesomface.png"
             "${GLFW_SOURCE_DIR}/res/tuichu.png"
@@ -96,9 +98,10 @@ add_executable(learn_opengl_2 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS
                learn2.c utils.c)
 add_executable(learn_opengl_3 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS} ${STB} ${IMAGES}
                learn3.c utils.c)
-add_executable(learn_opengl_4 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS} ${STB} ${IMAGES} ${NANOSUIT}
+add_executable(learn_opengl_4 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS} ${STB} ${IMAGES}
                learn4.c utils.c camera.c shader.c texture2d.c
-               component/transform.c component/image.c data/mesh.c data/mesh.h data/model.c data/model.h)
+               component/transform.c component/image.c data/mesh.c data/model.c
+               utils/image_loader.c)
 
 target_link_libraries(learn_opengl_3 PRIVATE cglm)
 target_link_libraries(learn_opengl_4 PRIVATE cglm glib-2.0 assimp)

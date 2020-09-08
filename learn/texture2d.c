@@ -4,12 +4,19 @@
 
 #include "texture2d.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb/stb_image.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+
+//#define STB_IMAGE_IMPLEMENTATION
+//#include <stb/stb_image.h>
+
+#include "utils/image_loader.h"
 
 void texture2d_cache_init() {
     cache = g_hash_table_new(g_str_hash, g_str_equal);
-    stbi_set_flip_vertically_on_load(1);
+//    stbi_set_flip_vertically_on_load(1);
+    image_loader_init();
 }
 
 struct Texture2d* texture_create(const char *path) {
@@ -20,7 +27,7 @@ struct Texture2d* texture_create(const char *path) {
         return (struct Texture2d*)value;
     }
     int width, height, nr_channels;
-    unsigned char *data = stbi_load(path, &width, &height, &nr_channels, 0);
+    unsigned char *data = image_loader_load(path, &width, &height, &nr_channels, 0);
 
     if (!data) {
         fprintf(stderr, "load image fail.");
@@ -36,7 +43,7 @@ struct Texture2d* texture_create(const char *path) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
     struct Texture2d *texture2d = malloc(sizeof(struct Texture2d));
-    stbi_image_free(data);
+    image_loader_image_free(data);
     texture2d->id = texture;
     texture2d->ref = 0;
     texture2d->path = strdup(path);

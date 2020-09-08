@@ -10,70 +10,63 @@
 #include <assimp/postprocess.h>
 #include <assimp/cimport.h>
 
-//#define STB_IMAGE_IMPLEMENTATION
-//#include <stb/stb_image.h>
+#include "../utils/image_loader.h"
 
 static GLuint texture_fromfile(const char *filename, const char* directory, bool gamma) {
     //string filename = string(path);
     //filename = directory + '/' + filename;
     char path[512];
     snprintf(path, sizeof(path), "%s/%s", directory, filename);
-    GLuint textureID;
-    glGenTextures(1, &textureID);
+    GLuint texture_id = 0;
 
     int width, height, nrComponents;
-    unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
+    unsigned char *data = image_loader_load(path, &width, &height, &nrComponents, 0);
+//    unsigned char *data = stbi_load(path, &width, &height, &nr_channels, 0);
     if (data) {
         GLenum format;
         if (nrComponents == 1)
-        format = GL_RED;
+            format = GL_RED;
         else if (nrComponents == 3)
-        format = GL_RGB;
+            format = GL_RGB;
         else if (nrComponents == 4)
-        format = GL_RGBA;
+            format = GL_RGBA;
 
-        glBindTexture(GL_TEXTURE_2D, textureID);
+        glGenTextures(1, &texture_id);
+        glBindTexture(GL_TEXTURE_2D, texture_id);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        stbi_image_free(data);
+        image_loader_image_free(data);
     } else {
-//        std::cout << "Texture failed to load at path: " << path << std::endl;
         fprintf(stderr, "Texture failed to load at path: %s\n", path);
-        stbi_image_free(data);
+        image_loader_image_free(data);
     }
-    return textureID;
+    return texture_id;
 }
 
 void model_init(struct Model *model) {
     memset(model, 0, sizeof(*model));
 //    model->mesh_head = g_list_alloc();
-    model->meshes = g_array_new(FALSE, TRUE, 128);
+//    model->meshes = g_array_new(FALSE, TRUE, 128);
 }
 
 void model_delete(struct Model *model) {
     assert(model);
     if (!model) return;
 //    g_list_free(model->mesh_head);
-    g_array_free(model->meshes, true);
+//    g_array_free(model->meshes, true);
+    if (model->mesh_head) g_slist_free(model->mesh_head);
+    // TODO free meshes
     if (model->directory) free(model->directory);
 }
 
 void model_draw(struct Model *model, struct Shader shader) {
-//    for (size_t i = 0; i < model->meshes_len; ++i)
-//        mesh_draw(&model->meshes[i], shader);
-//    for (GList *node = model->mesh_head->next; node->data; node = node->next) {
-//        mesh_draw(node->data, shader);
-//    }
-    size_t len = g_array_get_element_size(model->meshes);
-    for (size_t i = 0; i < len; ++i) {
-        struct Mesh *mesh = g_array_index(model->meshes, struct Mesh*, i);
-        mesh_draw(mesh, shader);
+    for (GSList *node = model->mesh_head; node; node = node->next) {
+        mesh_draw(node->data, shader);
     }
 }
 
@@ -83,7 +76,8 @@ bool model_load(struct Model *mode, const char *path) {
         fprintf(stderr, "path is null.\n");
         return false;
     }
-    const struct aiScene *scene = aiImportFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+    const struct aiScene *scene = aiImportFile(path, aiProcess_Triangulate |
+            aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         fprintf(stderr, "load mode err:%s\n", aiGetErrorString());
         return false;
@@ -103,74 +97,80 @@ bool model_load(struct Model *mode, const char *path) {
 void model_process_node(struct Model *model, struct aiNode *node, const struct aiScene *scene) {
     for (size_t i = 0; i < node->mNumMeshes; ++i) {
         struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-//        g_list_append(model->mesh_head, mesh);
-        g_array_append_val(model->meshes, mesh);
+        model->mesh_head = g_slist_append(model->mesh_head, model_process_mesh(model, mesh, scene));
+//        g_array_append_val(model->meshes, mesh);
     }
     for (size_t i = 0; i < node->mNumChildren; ++i) {
         model_process_node(model, node->mChildren[i], scene);
     }
 }
 
-struct Mesh* model_process_mesh(struct Model *model, struct aiMesh *mesh, struct aiScene *scene) {
-    struct Mesh *ret = mesh_create(scene->mNumMeshes, 0, 0);
+struct Mesh* model_process_mesh(struct Model *model, struct aiMesh *mesh, const struct aiScene *scene) {
+//    size_t num_indices = 0;
+//    size_t num_textures = 0;
+//    for(size_t i = 0; i < mesh->mNumFaces; i++) {
+//        num_indices += mesh->mFaces[i].mNumIndices;
+//    }
+//    if (mesh->mMaterialIndex >= 0) {
+//        struct aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+//        num_textures += aiGetMaterialTextureCount(material, aiTextureType_DIFFUSE);
+//        num_textures += aiGetMaterialTextureCount(material, aiTextureType_SPECULAR);
+//        num_textures += aiGetMaterialTextureCount(material, aiTextureType_NORMALS);
+//        num_textures += aiGetMaterialTextureCount(material, aiTextureType_HEIGHT);
+//    }
+    struct Mesh *dest_mesh = mesh_create(mesh->mNumVertices, 0, 0);
     for (size_t i = 0; i < mesh->mNumVertices; i++) {
-        struct aiVector3D *mesh_ver = &mesh->mVertices[i];
-        struct aiVector3D *mesh_nor = &mesh->mNormals[i];
-        struct Vertex *vertex = &g_array_index(ret->vertices, struct Vertex, i);
-        vec3 *pos = vertex->position;
-        vec3 *nor = vertex->normal;
-        vec2 *coords = vertex->tex_coords;
-        *pos[0] = mesh_ver->x;
-        *pos[1] = mesh_ver->y;
-        *pos[2] = mesh_ver->z;
+        struct Vertex vertex;
+        memset(&vertex, 0, sizeof(vertex));
 
-        *nor[0] = mesh_nor->x;
-        *nor[1] = mesh_nor->y;
-        *nor[2] = mesh_nor->z;
-        if (mesh->mTextureCoords[0]) {
-            *coords[0] = mesh->mTextureCoords[0][i].x;
-            *coords[1] = mesh->mTextureCoords[0][i].y;
-        } else {
-            *coords[0] = *coords[1] = 0.0f;
+        glm_vec3_copy(&mesh->mVertices[i], vertex.position);
+
+        if (mesh->mNormals) {
+            glm_vec3_copy(&mesh->mNormals[i], vertex.normal);
         }
+        if (mesh->mTextureCoords[0]) {
+            glm_vec2_copy(&mesh->mTextureCoords[0][i], vertex.tex_coords);
 
+            glm_vec3_copy(&mesh->mTangents[i], vertex.tangent);
+            glm_vec3_copy(&mesh->mBitangents[i], vertex.bitangent);
+        }
+        g_array_append_val(dest_mesh->vertices, vertex);
     }
-    for(size_t i = 0; i < mesh->mNumFaces; i++) {
+    for (size_t i = 0; i < mesh->mNumFaces; i++) {
         struct aiFace face = mesh->mFaces[i];
-        g_array_append_vals(ret->indices, face.mIndices, face.mNumIndices);
+        g_array_append_vals(dest_mesh->indices, face.mIndices, face.mNumIndices);
     }
     // TODO 处理索引
     if (mesh->mMaterialIndex >= 0) {
         struct aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-        size_t len;
-        struct Texture* diffuse_maps = loadMaterialTextures(model, material, aiTextureType_DIFFUSE,
-                "texture_diffuse", &len);
-        g_array_append_vals(ret->textures, diffuse_maps, len);
-        struct Texture* specular_maps = loadMaterialTextures(model, material, aiTextureType_SPECULAR,
-                "texture_specular", &len);
-        g_array_append_vals(ret->textures, specular_maps, len);
-        free(diffuse_maps);
-        free(specular_maps);
+        loadMaterialTextures(model, material, aiTextureType_DIFFUSE,
+                             "texture_diffuse", dest_mesh->textures);
+        loadMaterialTextures(model, material, aiTextureType_SPECULAR,
+                             "texture_specular", dest_mesh->textures);
+        loadMaterialTextures(model, material, aiTextureType_NORMALS,
+                             "texture_normal", dest_mesh->textures);
+        loadMaterialTextures(model, material, aiTextureType_HEIGHT,
+                             "texture_height", dest_mesh->textures);
     }
-    return ret;
+    mesh_setup(dest_mesh);
+    return dest_mesh;
 }
 
-struct Texture* loadMaterialTextures(struct Model *model, struct aiMaterial *mat, enum aiTextureType type,
-                                     const char* type_name, size_t *len) {
+void loadMaterialTextures(struct Model *model, struct aiMaterial *mat, enum aiTextureType type,
+                          const char* type_name, GArray* textures) {
     size_t cnt = aiGetMaterialTextureCount(mat, type);
-    len = cnt;
-    if (cnt <= 0) return NULL;
-    struct Texture **textures = mat = malloc(sizeof(struct Texture *) * cnt);
-    for(size_t i = 0; i < cnt; i++) {
+    for (size_t i = 0; i < cnt; i++) {
         struct aiString str;
-//        mat->GetTexture(type, i, &str);
         aiGetMaterialTexture(mat, type, i, &str, NULL, NULL,
                              NULL, NULL, NULL, NULL);
-        struct Texture *texture = malloc(sizeof(struct Texture));
-        texture->id = texture_fromfile(str.data, model->directory, false);
-        texture->type = strdup(type_name);
-        texture->path = strdup(str.data);
-        textures[i] = texture;
+        struct Texture texture;
+        texture.id = texture_fromfile(str.data, model->directory, false);
+        texture.type = strdup(type_name);
+        texture.path = strdup(str.data);
+//        textures[i] = texture;
+        g_array_append_val(textures, texture);
+        size_t size = textures->len;
+        printf("size:%zu\n", size);
     }
-    return textures[0];
+//    return textures[0];
 }

@@ -94,7 +94,6 @@ void shader_set_float(struct Shader shader, const char *name, float value) {
     glUniform1f(glGetUniformLocation(shader.id, name), value);
 }
 
-
 void shader_set_vec3(struct Shader shader, const char *name, vec3 value) {
     glUniform3f(glGetUniformLocation(shader.id, name), value[0], value[1], value[2]);
 }

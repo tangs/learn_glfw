@@ -16,6 +16,9 @@
 
 #include "data/model.h"
 
+#define ENABLE_GUI
+
+#ifdef ENABLE_GUI
 #define NK_INCLUDE_FIXED_TYPES
 #define NK_INCLUDE_STANDARD_IO
 #define NK_INCLUDE_STANDARD_VARARGS
@@ -28,6 +31,7 @@
 #define NK_KEYSTATE_BASED_INPUT
 #include <Nuklear/nuklear.h>
 #include <Nuklear/nuklear_glfw_gl3.h>
+#endif
 
 static int frame_ = 0;
 static float delta_time_ = 0.0f;
@@ -38,6 +42,7 @@ static const int WIN_HEIGHT = 720;
 
 static struct Shader shader_;
 static struct Shader shader_white_;
+static struct Shader shader_model_;
 
 static GLuint vbo_ = 0;
 static GLuint vao_ = 0;
@@ -160,7 +165,7 @@ static struct Camera camera_;
 
 // camera movable
 static bool movable_ = false;
-static struct nk_colorf light_color_ = {1.0f, 1.0f, 0.0f, 1.0f};
+static vec4 light_color_ = {1.0f, 1.0f, 0.0f, 1.0f};
 
 static void scroll_callback(GLFWwindow* window, double x_offset, double y_offset) {
     camera_process_mouse_scroll(&camera_, y_offset);
@@ -267,13 +272,18 @@ static void update_mat() {
     shader_use(shader_);
     shader_set_matrix(shader_, "view", view_mat);
     shader_set_matrix(shader_, "projection", projection_mat_);
-    shader_set_vec3(shader_, "lightColor", (vec3){light_color_.r, light_color_.g, light_color_.b});
+    shader_set_vec3(shader_, "lightColor", (vec3){light_color_[0], light_color_[1], light_color_[2]});
 //    shader_set_vec3(shader_, "lightPos", cubePositions[0]);
 
     shader_use(shader_white_);
     shader_set_matrix(shader_white_, "view", view_mat);
     shader_set_matrix(shader_white_, "projection", projection_mat_);
-    shader_set_vec4(shader_white_, "color", (vec4){light_color_.r, light_color_.g, light_color_.b, light_color_.a});
+    shader_set_vec4(shader_white_, "color", (vec4){light_color_[0], light_color_[1], light_color_[2], light_color_[3]});
+
+
+    shader_use(shader_model_);
+    shader_set_matrix(shader_model_, "view", view_mat);
+    shader_set_matrix(shader_model_, "projection", projection_mat_);
 }
 
 static void render() {
@@ -305,13 +315,29 @@ static void render() {
         }
         glDrawArrays(GL_TRIANGLES, 0, 36);
     }
-    model_draw(&model_, shader_);
+
+    shader_use(shader_model_);
+
+    mat4 projection, view;
+    glm_perspective(glm_rad(camera_.zoom), (float)WIN_WIDTH / (float)WIN_HEIGHT, 0.1f, 100.0f, projection);
+    camera_get_view_matrix(&camera_, view);
+    shader_set_matrix(shader_model_,"projection", projection);
+    shader_set_matrix(shader_model_, "view", view);
+
+    mat4 model;
+    glm_mat4_identity(model);
+    glm_translate(model, (vec3){0.0f, 0.0f, 0.0f});
+    glm_scale(model, (vec3){1.0f, 1.0f, 1.0f});
+
+    shader_set_matrix(shader_model_, "model", model);
+    model_draw(&model_, shader_model_);
 }
 
+#ifdef ENABLE_GUI
 #define MAX_VERTEX_BUFFER 512 * 1024
 #define MAX_ELEMENT_BUFFER 128 * 1024
 static struct nk_context *nk_ctx_;
-static struct nk_colorf bg_;
+static struct nk_colorf bg_ = {1.0f, 1.0f, 1.0f, 1.0f};
 
 void init_gui(GLFWwindow *window) {
     nk_ctx_ = nk_glfw3_init(window, NK_GLFW3_DEFAULT);
@@ -368,25 +394,27 @@ void update_gui() {/* GUI */
         nk_layout_row_dynamic(nk_ctx_, 20, 1);
         nk_label(nk_ctx_, "light color:", NK_TEXT_LEFT);
         nk_layout_row_dynamic(nk_ctx_, 25, 1);
-        if (nk_combo_begin_color(nk_ctx_, nk_rgb_cf((light_color_)), nk_vec2(nk_widget_width(nk_ctx_), 400))) {
+        struct nk_colorf col = {light_color_[0], light_color_[1], light_color_[2], light_color_[3]};
+        if (nk_combo_begin_color(nk_ctx_, nk_rgb_cf((col)), nk_vec2(nk_widget_width(nk_ctx_), 400))) {
             nk_layout_row_dynamic(nk_ctx_, 120, 1);
-            light_color_ = nk_color_picker(nk_ctx_, light_color_, NK_RGBA);
+            col = nk_color_picker(nk_ctx_, col, NK_RGBA);
             nk_layout_row_dynamic(nk_ctx_, 25, 1);
-            light_color_.r = nk_propertyf(nk_ctx_, "#R:", 0, light_color_.r, 1.0f, 0.01f, 0.005f);
-            light_color_.g = nk_propertyf(nk_ctx_, "#G:", 0, light_color_.g, 1.0f, 0.01f, 0.005f);
-            light_color_.b = nk_propertyf(nk_ctx_, "#B:", 0, light_color_.b, 1.0f, 0.01f, 0.005f);
-            light_color_.a = nk_propertyf(nk_ctx_, "#A:", 0, light_color_.a, 1.0f, 0.01f, 0.005f);
+            light_color_[0] = nk_propertyf(nk_ctx_, "#R:", 0, col.r, 1.0f, 0.01f, 0.005f);
+            light_color_[1] = nk_propertyf(nk_ctx_, "#G:", 0, col.g, 1.0f, 0.01f, 0.005f);
+            light_color_[2] = nk_propertyf(nk_ctx_, "#B:", 0, col.b, 1.0f, 0.01f, 0.005f);
+            light_color_[3] = nk_propertyf(nk_ctx_, "#A:", 0, col.a, 1.0f, 0.01f, 0.005f);
             nk_combo_end(nk_ctx_);
+
         }
     }
     nk_end(nk_ctx_);
 }
 
+#endif // ENABLE_GUI
+
 int main() {
-    model_init(&model_);
-    model_load(&model_, "../nanosuit/nanosuit.obj1");
     texture2d_cache_init();
-    camera_init(&camera_, (vec3){0.0f, 0.0f, 10.0f}, (vec3){0.0f, 1.0f,  0.0f}, -90.0f, 0.0f);
+    camera_init(&camera_, (vec3){0.0f, 0.0f, 50.0f}, (vec3){0.0f, 1.0f,  0.0f}, -90.0f, 0.0f);
     glm_mat4_identity(projection_mat_);
     glm_mat4_identity(model_mat_);
 //    glm_mat4_identity(view_mat_);
@@ -433,9 +461,17 @@ int main() {
         return -4;
     }
 
+    if (shader_init(&shader_model_,
+                    "../Shaders/1.model_loading.vs",
+                    "../Shaders/1.model_loading.fs")) {
+        return -5;
+    }
+
     // init VAO
     init_vao_data();
     init_image_data();
+    model_init(&model_);
+    model_load(&model_, "../nanosuit/nanosuit.obj1");
 
     shader_use(shader_);
     shader_set_int(shader_, "texture1", 0);
@@ -451,7 +487,9 @@ int main() {
 //    glEnable(GL_BLEND);
 //    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+#ifdef ENABLE_GUI
     init_gui(window);
+#endif
 
     last_frame_time_ = glfwGetTime();
     while (!glfwWindowShouldClose(window)) {
@@ -462,17 +500,24 @@ int main() {
         glfwPollEvents();
         process_input(window);
 
+#ifdef ENABLE_GUI
         glClearColor(bg_.r, bg_.g, bg_.b, bg_.a);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         nk_glfw3_new_frame();
         update_gui();
+#else
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+#endif
 
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//        glEnable(GL_BLEND);
+//        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_DEPTH_TEST);
         render();
+
+#ifdef ENABLE_GUI
         nk_glfw3_render(NK_ANTI_ALIASING_ON, MAX_VERTEX_BUFFER, MAX_ELEMENT_BUFFER);
+#endif
 
         glfwSwapBuffers(window);
         ++frame_;
@@ -481,7 +526,10 @@ int main() {
     glDeleteVertexArrays(1, &vao_);
     glDeleteBuffers(1, &vbo_);
 
+#ifdef ENABLE_GUI
     nk_glfw3_shutdown();
+#endif
+
     glfwTerminate();
     return 0;
 }

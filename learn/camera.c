@@ -87,7 +87,7 @@ void camera_process_mouse_movement(struct Camera *camera, float x_offset, float 
 
 void camera_process_mouse_scroll(struct Camera *camera, float y_offset) {
     camera->zoom -= y_offset;
-    camera->zoom = glm_clamp(camera->zoom, 1.0f, 45.0f);
+    camera->zoom = glm_clamp(camera->zoom, -40.f, 45.0f);
 }
 
 void camera_set_euler_angle(struct Camera *camera, float yaw, float pitch) {
