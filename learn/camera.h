@@ -19,6 +19,8 @@ enum CameraMovement {
     BACKWARD,
     LEFT,
     RIGHT,
+    IN,
+    OUT,
 };
 
 struct Camera {

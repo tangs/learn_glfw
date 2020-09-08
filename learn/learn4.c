@@ -286,6 +286,7 @@ static void update_mat() {
     shader_use(shader_model_);
     shader_set_matrix(shader_model_, "view", view_mat);
     shader_set_matrix(shader_model_, "projection", projection_mat_);
+    shader_set_vec3(shader_model_, "lightColor", (vec3){light_color_[0], light_color_[1], light_color_[2]});
 }
 
 static void render() {
@@ -297,6 +298,7 @@ static void render() {
     glBindTexture(GL_TEXTURE_2D, texture2_->id);
     glBindVertexArray(vao_);
 
+    vec3 light_pos;
     int len = sizeof(cubePositions) / sizeof(cubePositions[0]);
     for (int i = 0; i < len; ++i) {
         mat4 model_mat;
@@ -305,6 +307,7 @@ static void render() {
         if (i == 0) {
             glm_vec3_add(pos, model_pos_, pos);
             shader_set_vec3(shader_, "lightPos", pos);
+            glm_vec3_copy(pos, light_pos);
         }
         glm_translate_to(model_mat_, pos, model_mat);
 //        if (i) glm_rotate(model_mat, glm_rad((int)(glfwGetTime() * 250) % 360), cubeRotAis[i]);
@@ -325,6 +328,7 @@ static void render() {
     camera_get_view_matrix(&camera_, view);
     shader_set_matrix(shader_model_,"projection", projection);
     shader_set_matrix(shader_model_, "view", view);
+    shader_set_matrix(shader_model_, "lightPos", light_pos);
 
     mat4 model;
     glm_mat4_identity(model);

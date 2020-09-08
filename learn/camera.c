@@ -68,6 +68,16 @@ void camera_process_keyboard(struct Camera *camera, enum CameraMovement directio
             glm_vec3_add(camera->position, dt, camera->position);
         }
         break;
+        case IN: {
+            glm_vec3_mul(camera->front, dt, dt);
+            glm_vec3_add(camera->position, dt, camera->position);
+        }
+        break;
+        case OUT: {
+            glm_vec3_mul(camera->front, dt, dt);
+            glm_vec3_sub(camera->position, dt, camera->position);
+        }
+        break;
     }
 }
 
