@@ -234,11 +234,11 @@ static void process_input(GLFWwindow *window) {
         model_pos_[0] += 0.05f;
 //        glm_rotate(model_mat_, glm_rad(1.0f), (vec3){0.0f, 1.0f, 0.0f});
     }
-    if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
         model_pos_[2] += 0.05f;
 //        glm_rotate(model_mat_, glm_rad(-1.0f), (vec3){0.0f, 0.0f, 1.0f});
     }
-    if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
         model_pos_[2] -= 0.05f;
 //        glm_rotate(model_mat_, glm_rad(1.0f), (vec3){0.0f, 0.0f, 1.0f});
     }
@@ -328,7 +328,7 @@ static void render() {
     camera_get_view_matrix(&camera_, view);
     shader_set_matrix(shader_model_,"projection", projection);
     shader_set_matrix(shader_model_, "view", view);
-    shader_set_matrix(shader_model_, "lightPos", light_pos);
+    shader_set_vec3(shader_model_, "lightPos", light_pos);
 
     mat4 model;
     glm_mat4_identity(model);
@@ -478,6 +478,8 @@ int main() {
     init_image_data();
     model_init(&model_);
     model_load(&model_, "../nanosuit/nanosuit.obj1");
+//    model_load(&model_, "../fish/f_bzy.obj1");
+
 
     shader_use(shader_);
     shader_set_int(shader_, "texture1", 0);

@@ -92,6 +92,9 @@ set(NANOSUIT    "${GLFW_SOURCE_DIR}/res/nanosuit/LICENSE.txt"
                 "${GLFW_SOURCE_DIR}/res/nanosuit/nanosuit.blend"
                 "${GLFW_SOURCE_DIR}/res/nanosuit/nanosuit.obj1"
                 "${GLFW_SOURCE_DIR}/res/nanosuit/nanosuit.mtl")
+set(FISH    "${GLFW_SOURCE_DIR}/res/nanosuit/nanosuit.mtl"
+            "${GLFW_SOURCE_DIR}/res/fish/f_bzy.obj1"
+            "${GLFW_SOURCE_DIR}/res/fish/f_bzy_c.png")
 
 add_executable(learn_opengl_1 WIN32 MACOSX_BUNDLE learn.c ${ICON} ${GLAD_GLAD})
 add_executable(learn_opengl_2 WIN32 MACOSX_BUNDLE ${ICON} ${GLAD_GLAD} ${SHADERS} ${STB} ${IMAGES}
@@ -122,7 +125,8 @@ if (APPLE)
     set_target_properties(learn_opengl_4 PROPERTIES MACOSX_BUNDLE_BUNDLE_NAME "learn_opengl_4")
 
     set_source_files_properties(glfw.icns ${IMAGES} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-    set_source_files_properties(glfw.icns ${NANOSUIT} PROPERTIES MACOSX_PACKAGE_LOCATION "nanosuit")
+    set_source_files_properties(${NANOSUIT} PROPERTIES MACOSX_PACKAGE_LOCATION "nanosuit")
+    set_source_files_properties(${FISH} PROPERTIES MACOSX_PACKAGE_LOCATION "fish")
 
     set_source_files_properties(${SHADERS} PROPERTIES MACOSX_PACKAGE_LOCATION "Shaders")
 
