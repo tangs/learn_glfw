@@ -175,11 +175,9 @@ static void scroll_callback(GLFWwindow* window, double x_offset, double y_offset
     camera_process_mouse_scroll(&camera_, y_offset);
 }
 
-static bool lbutton_down = false;
-static double lbutton_last_x = 0.0;
-static double lbutton_last_y = 0.0;
+static bool l_button_down = false;
 static void mouse_callback(GLFWwindow* window, double x_pos, double y_pos) {
-    if (lbutton_down) {
+    if (l_button_down) {
         // do your drag here
         float dt_x = x_pos - last_x_;
         float dt_y = y_pos - last_y_;
@@ -202,9 +200,9 @@ static void mouse_callback(GLFWwindow* window, double x_pos, double y_pos) {
 static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
     if (button == GLFW_MOUSE_BUTTON_LEFT) {
         if(GLFW_PRESS == action) {
-            lbutton_down = true;
+            l_button_down = true;
         } else if(GLFW_RELEASE == action) {
-            lbutton_down = false;
+            l_button_down = false;
         }
     }
 }
