@@ -169,7 +169,7 @@ void loadMaterialTextures(struct Model *model, struct aiMaterial *mat, enum aiTe
 //        textures[i] = texture;
         g_array_append_val(textures, texture);
         size_t size = textures->len;
-        printf("size:%zu\n", size);
+//        printf("size:%zu\n", size);
     }
 //    return textures[0];
 }

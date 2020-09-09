@@ -23,7 +23,8 @@ void main() {
     vec4 diffuseTexture = texture(texture_diffuse1, TexCoords);
     vec4 specularTexture = texture(texture_specular1, TexCoords);
 
-    FragColor = (diffuseTexture + specularTexture) * vec4((ambient + diffuse), 1.0f);
+//     FragColor = (diffuseTexture + specularTexture) * vec4((ambient + diffuse), 1.0f);
+    FragColor = (diffuseTexture) * vec4((ambient + diffuse), 1.0f);
 
 //     vec4 diffuse = texture(texture_diffuse1, TexCoords);
 // 	vec4 specular = texture(texture_specular1, TexCoords);
