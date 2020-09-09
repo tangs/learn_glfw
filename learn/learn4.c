@@ -157,6 +157,8 @@ static mat4 projection_mat_;
 static mat4 model_mat_;
 static vec3 model_rot_ = (vec3){70.0f, 0.0f, 0.0f};
 static vec3 model_pos_ = (vec3){0.0f, 0.0f, 0.0f};
+// model mat.
+static mat4 model_mat4_3d_;
 
 
 static float last_x_ = WIN_WIDTH / 2;
@@ -173,7 +175,17 @@ static void scroll_callback(GLFWwindow* window, double x_offset, double y_offset
     camera_process_mouse_scroll(&camera_, y_offset);
 }
 
+static bool lbutton_down = false;
+static double lbutton_last_x = 0.0;
+static double lbutton_last_y = 0.0;
 static void mouse_callback(GLFWwindow* window, double x_pos, double y_pos) {
+    if (lbutton_down) {
+        // do your drag here
+        float dt_x = x_pos - last_x_;
+        float dt_y = y_pos - last_y_;
+        glm_rotate(model_mat4_3d_, glm_rad(dt_x / 10), (vec3){0.0, 1.0, 0.0});
+        glm_rotate(model_mat4_3d_, glm_rad(dt_y / 10), (vec3){1.0, 0.0, 0.0});
+    }
     if (first_mouse_) {
         last_x_ = x_pos;
         last_y_ = y_pos;
@@ -187,10 +199,18 @@ static void mouse_callback(GLFWwindow* window, double x_pos, double y_pos) {
     if (movable_)
         camera_process_mouse_movement(&camera_, x_offset, y_offset, true);
 }
+static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+        if(GLFW_PRESS == action) {
+            lbutton_down = true;
+        } else if(GLFW_RELEASE == action) {
+            lbutton_down = false;
+        }
+    }
+}
 
 static bool space_pressed_ = false;
 static void process_input(GLFWwindow *window) {
-
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
         if (!space_pressed_) movable_ = !movable_;
         space_pressed_ = true;
@@ -330,12 +350,12 @@ static void render() {
     shader_set_matrix(shader_model_, "view", view);
     shader_set_vec3(shader_model_, "lightPos", light_pos);
 
-    mat4 model;
-    glm_mat4_identity(model);
-    glm_translate(model, (vec3){0.0f, 0.0f, 0.0f});
-    glm_scale(model, (vec3){1.0f, 1.0f, 1.0f});
+//    mat4 model;
+//    glm_mat4_identity(model);
+//    glm_translate(model, (vec3){0.0f, 0.0f, 0.0f});
+//    glm_scale(model, (vec3){1.0f, 1.0f, 1.0f});
 
-    shader_set_matrix(shader_model_, "model", model);
+    shader_set_matrix(shader_model_, "model", model_mat4_3d_);
     model_draw(&model_, shader_model_);
 }
 
@@ -478,6 +498,9 @@ int main() {
     init_image_data();
     model_init(&model_);
     model_load(&model_, "../nanosuit/nanosuit.obj1");
+    glm_mat4_identity(model_mat4_3d_);
+    glm_translate(model_mat4_3d_, (vec3){0.0f, 0.0f, 0.0f});
+    glm_scale(model_mat4_3d_, (vec3){1.0f, 1.0f, 1.0f});
 //    model_load(&model_, "../fish/f_bzy.obj1");
 
 
@@ -489,6 +512,7 @@ int main() {
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
     glEnable(GL_DEPTH_TEST);
