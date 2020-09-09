@@ -8,7 +8,7 @@
 #include <stb/stb_image.h>
 
 void image_loader_init() {
-    stbi_set_flip_vertically_on_load(1);
+//    stbi_set_flip_vertically_on_load(1);
 }
 
 unsigned char *image_loader_load (char const *filename, int *x, int *y, int *channels_in_file, int desired_channels) {

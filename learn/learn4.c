@@ -145,8 +145,6 @@ static void init_vao_data() {
 static void init_image_data() {
     texture1_ = texture_create("cube_met.png");
     texture2_ = texture_create("awesomface.png");
-    // TODO test code.
-    texture2_->id = 6;
     texture_retain(texture1_);
     texture_retain(texture2_);
 }
@@ -361,7 +359,7 @@ static void render() {
 #define MAX_VERTEX_BUFFER 512 * 1024
 #define MAX_ELEMENT_BUFFER 128 * 1024
 static struct nk_context *nk_ctx_;
-static struct nk_colorf bg_ = {1.0f, 1.0f, 1.0f, 1.0f};
+static struct nk_colorf bg_ = {0.0f, 0.0f, 0.0f, 1.0f};
 
 void init_gui(GLFWwindow *window) {
     nk_ctx_ = nk_glfw3_init(window, NK_GLFW3_DEFAULT);
@@ -495,11 +493,11 @@ int main() {
     init_vao_data();
     init_image_data();
     model_init(&model_);
-    model_load(&model_, "../nanosuit/nanosuit.obj1");
+//    model_load(&model_, "../nanosuit/nanosuit.obj1");
+    model_load(&model_, "../fish/f_bzy.obj");
     glm_mat4_identity(model_mat4_3d_);
     glm_translate(model_mat4_3d_, (vec3){0.0f, 0.0f, 0.0f});
-    glm_scale(model_mat4_3d_, (vec3){1.0f, 1.0f, 1.0f});
-//    model_load(&model_, "../fish/f_bzy.obj1");
+    glm_scale(model_mat4_3d_, (vec3){100.0f, 100.0f, 100.0f});
 
 
     shader_use(shader_);
@@ -513,7 +511,6 @@ int main() {
     glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
-    glEnable(GL_DEPTH_TEST);
 //    glEnable(GL_BLEND);
 //    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -532,7 +529,8 @@ int main() {
 
 #ifdef ENABLE_GUI
         glClearColor(bg_.r, bg_.g, bg_.b, bg_.a);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+//        glDepthFunc(GL_LESS);
         nk_glfw3_new_frame();
         update_gui();
 #else
@@ -540,10 +538,12 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 #endif
 
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_STENCIL_TEST);
+        glStencilMask(0x00);
 //        glEnable(GL_BLEND);
 //        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        glEnable(GL_DEPTH_TEST);
         render();
 
 #ifdef ENABLE_GUI
