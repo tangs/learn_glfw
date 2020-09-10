@@ -10,14 +10,26 @@
 #include <cglm/cglm.h>
 #include <glad/glad.h>
 
+#define NUM_BONES_PER_VEREX 4
+
 struct Shader;
+
+struct VertexBoneData {
+    uint ids[NUM_BONES_PER_VEREX];
+    float weights[NUM_BONES_PER_VEREX];
+};
+
+struct Bone {
+
+};
 
 struct Vertex {
     vec3 position;
     vec3 normal;
     vec2 tex_coords;
-    vec3 tangent;
-    vec3 bitangent;
+    struct VertexBoneData bone_data;
+//    vec3 tangent;
+//    vec3 bitangent;
 };
 
 struct Texture {
@@ -30,6 +42,7 @@ struct Mesh {
     GArray *vertices;
     GArray *indices;
     GArray *textures;
+    GArray *bones;
     GLuint vao;
     GLuint vbo;
     GLuint ebo;

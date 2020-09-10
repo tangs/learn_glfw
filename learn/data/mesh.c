@@ -19,16 +19,6 @@ void mesh_setup(struct Mesh *mesh) {
     glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
     glBufferData(GL_ARRAY_BUFFER, mesh->vertices->len * sizeof(struct Vertex),
                  mesh->vertices->data, GL_STATIC_DRAW);
-//    struct Vertex *p = mesh->vertices->data;
-//    for (int i = 0; i < mesh->vertices->len; ++i) {
-//        printf("coords %d:%f, %f\n", i, p[i].tex_coords[0], p[i].tex_coords[1]);
-//    }
-
-//    GLuint *p1 = mesh->indices->data;
-//    for (int i = 0; i < mesh->indices->len; ++i) {
-//        printf("indices %d:%u\n", i, p1[i]);
-//    }
-
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices->len * sizeof(GLuint),
@@ -36,13 +26,17 @@ void mesh_setup(struct Mesh *mesh) {
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(struct Vertex), (void*)0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(struct Vertex),
-                          (void*)offsetof(struct Vertex, normal));
+            (void*)offsetof(struct Vertex, normal));
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(struct Vertex),
-                          (void*)offsetof(struct Vertex, tex_coords));
-    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(struct Vertex),
-                          (void*)offsetof(struct Vertex, tangent));
-    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(struct Vertex),
-                          (void*)offsetof(struct Vertex, bitangent));
+            (void*)offsetof(struct Vertex, tex_coords));
+    glVertexAttribIPointer(3, 4, GL_INT, sizeof(struct VertexBoneData),
+            (void*)offsetof(struct Vertex, bone_data));
+    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(struct VertexBoneData),
+            (void*)offsetof(struct Vertex, bone_data) + offsetof(struct VertexBoneData, weights));
+//    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(struct Vertex),
+//                          (void*)offsetof(struct Vertex, tangent));
+//    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(struct Vertex),
+//                          (void*)offsetof(struct Vertex, bitangent));
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);

@@ -88,51 +88,118 @@ bool model_load(struct Model *mode, const char *path) {
         return false;
     }
     *idx = 0;
+    mat4 matrix;
+    glm_mat4_identity(matrix);
     model_process_node(mode, scene->mRootNode, scene);
+
+    struct aiBone **bones = scene->mMeshes[0]->mBones;
+    for (int i = 0; i < scene->mMeshes[0]->mNumBones; ++i) {
+        struct aiBone *bone = bones[i];
+        printf("bone:%s\n", bone->mName.data);
+    }
+
     return true;
 }
 
-
 void model_process_node(struct Model *model, struct aiNode *node, const struct aiScene *scene) {
+//    node->mTransformation
+    printf("node:%s\n", node->mName.data);
     for (size_t i = 0; i < node->mNumMeshes; ++i) {
         struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        model->mesh_head = g_slist_append(model->mesh_head, model_process_mesh(model, mesh, scene));
-//        g_array_append_val(model->meshes, mesh);
+        model->mesh_head = g_slist_append(model->mesh_head, model_process_mesh(model, node, mesh, scene));
     }
     for (size_t i = 0; i < node->mNumChildren; ++i) {
         model_process_node(model, node->mChildren[i], scene);
     }
 }
 
-struct Mesh* model_process_mesh(struct Model *model, struct aiMesh *mesh, const struct aiScene *scene) {
-//    size_t num_indices = 0;
-//    size_t num_textures = 0;
-//    for(size_t i = 0; i < mesh->mNumFaces; i++) {
-//        num_indices += mesh->mFaces[i].mNumIndices;
-//    }
-//    if (mesh->mMaterialIndex >= 0) {
-//        struct aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-//        num_textures += aiGetMaterialTextureCount(material, aiTextureType_DIFFUSE);
-//        num_textures += aiGetMaterialTextureCount(material, aiTextureType_SPECULAR);
-//        num_textures += aiGetMaterialTextureCount(material, aiTextureType_NORMALS);
-//        num_textures += aiGetMaterialTextureCount(material, aiTextureType_HEIGHT);
-//    }
-    struct Mesh *dest_mesh = mesh_create(mesh->mNumVertices, 0, 0);
+static void to_mat4(float* src, mat4 dest) {
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            dest[i][j] = src[j * 4 + i];
+        }
+    }
+}
+
+struct Mesh* update_mesh(struct Mesh *dest_mesh, struct aiMesh *mesh, const struct aiScene *scene,
+        int anim_idx, int frame) {
     for (size_t i = 0; i < mesh->mNumVertices; i++) {
+        mat4 matrix;
+        glm_mat4_identity(matrix);
+
+        struct Vertex *vertex = &g_array_index(dest_mesh->vertices, struct Vertex, i);
+
+        struct aiAnimation *anim = scene->mAnimations[anim_idx];
+        struct aiBone **bones = mesh->mBones;
+
+//        glm_translate(matrix, (float*)&mesh->mVertices[i]);
+
+        int bone_idx = 0;
+        for (int j = 0; j < anim->mNumChannels; ++j) {
+            struct aiNodeAnim *channel = anim->mChannels[j];
+            for (int k = 0; k < mesh->mNumBones; ++k) {
+                struct aiBone *bone = bones[k];
+                if (!strcmp(channel->mNodeName.data, bone->mName.data)) {
+                    for (int l = 0; l < bone->mNumWeights; ++l) {
+                        if (bone->mWeights[l].mVertexId == i) {
+                            printf("%zu,%d,%f,%s\n", i, bone_idx, bone->mWeights[l].mWeight, bone->mName.data);
+                            vertex->bone_data.ids[bone_idx] = k;
+                            vertex->bone_data.weights[bone_idx++] = bone->mWeights[l].mWeight;
+                            vec3 scale, rotation, translation;
+                            glm_vec3_copy((float*)&(channel->mScalingKeys[frame].mValue), scale);
+                            glm_vec3_copy((float*)&(channel->mRotationKeys[frame].mValue.x), rotation);
+                            glm_vec3_copy((float*)&(channel->mPositionKeys[frame].mValue), translation);
+                            glm_vec3_scale(scale, bone->mWeights[l].mWeight, scale);
+                            glm_vec3_scale(rotation, bone->mWeights[l].mWeight, rotation);
+                            glm_vec3_scale(translation, bone->mWeights[l].mWeight, translation);
+                            mat4 matrix1;
+                            glm_mat4_identity(matrix1);
+
+                            glm_translate(matrix1, translation);
+
+//                            glm_rotate_x(matrix1, glm_rad(360 * rotation[0]), matrix1);
+//                            glm_rotate_y(matrix1, glm_rad(360 * rotation[1]), matrix1);
+//                            glm_rotate_z(matrix1, glm_rad(360 * rotation[2]), matrix1);
+                            glm_rotate(matrix1, glm_rad(360 * rotation[0]), (vec3){1.0, 0.0, 0.0});
+                            glm_rotate(matrix1, glm_rad(360 * rotation[1]), (vec3){0.0, 1.0, 0.0});
+                            glm_rotate(matrix1, glm_rad(360 * rotation[2]), (vec3){0.0, 0.0, 1.0});
+                            glm_scale(matrix1, scale);
+
+                            glm_mat4_mul(matrix, matrix1, matrix);
+                        }
+                    }
+                }
+            }
+        }
+        vec4 pos;
+        glm_vec3_copy((float*)&mesh->mVertices[i], pos);
+        pos[3] = 0;
+
+        glm_mat4_mulv(matrix, pos, pos);
+//        glm_vec3_copy(matrix[3], pos);
+
+//        glm_vec3_copy((float*)&mesh->mVertices[i], vertex.position);
+        glm_vec3_copy(pos, vertex->position);
+
+        if (mesh->mNormals) {
+            glm_vec3_copy((float*)&mesh->mNormals[i], vertex->normal);
+        }
+        if (mesh->mTextureCoords[0]) {
+            glm_vec2_copy((float*)&mesh->mTextureCoords[0][i], vertex->tex_coords);
+        }
+    }
+    mesh_setup(dest_mesh);
+}
+
+struct Mesh* model_process_mesh(struct Model *model, struct aiNode *node, struct aiMesh *mesh,
+        const struct aiScene *scene) {
+    struct Mesh *dest_mesh = mesh_create(mesh->mNumVertices, 0, 0);
+    dest_mesh->bones = g_array_sized_new(FALSE, FALSE, sizeof(struct Bone), mesh->mNumBones);
+    for (size_t i = 0; i < mesh->mNumVertices; i++) {
+
         struct Vertex vertex;
         memset(&vertex, 0, sizeof(vertex));
 
-        glm_vec3_copy((float*)&mesh->mVertices[i], vertex.position);
-
-        if (mesh->mNormals) {
-            glm_vec3_copy((float*)&mesh->mNormals[i], vertex.normal);
-        }
-        if (mesh->mTextureCoords[0]) {
-            glm_vec2_copy((float*)&mesh->mTextureCoords[0][i], vertex.tex_coords);
-
-            glm_vec3_copy((float*)&mesh->mTangents[i], vertex.tangent);
-            glm_vec3_copy((float*)&mesh->mBitangents[i], vertex.bitangent);
-        }
         g_array_append_val(dest_mesh->vertices, vertex);
     }
     for (size_t i = 0; i < mesh->mNumFaces; i++) {
@@ -151,7 +218,11 @@ struct Mesh* model_process_mesh(struct Model *model, struct aiMesh *mesh, const 
         loadMaterialTextures(model, material, aiTextureType_HEIGHT,
                              "texture_height", dest_mesh->textures);
     }
-    mesh_setup(dest_mesh);
+//    mesh_setup(dest_mesh);
+    model->dest_mesh = dest_mesh;
+    model->mesh = mesh;
+    model->scene = scene;
+    update_mesh(dest_mesh, mesh, scene, 2, 2);
     return dest_mesh;
 }
 
@@ -172,4 +243,8 @@ void loadMaterialTextures(struct Model *model, struct aiMaterial *mat, enum aiTe
 //        printf("size:%zu\n", size);
     }
 //    return textures[0];
+}
+
+struct Mesh* model_anim(struct Model *model, int anim_idx, int frame) {
+    update_mesh(model->dest_mesh, model->mesh, model->scene, anim_idx, frame);
 }

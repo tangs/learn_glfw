@@ -376,12 +376,14 @@ void init_gui(GLFWwindow *window) {
         /*nk_style_set_font(ctx, &droid->handle);*/}
 }
 
+static int last_property = 20;
+//extern int s_frame;
 void update_gui() {/* GUI */
     if (nk_begin(nk_ctx_, "update", nk_rect(50, 50, 230, 280),
                  NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_SCALABLE|
                  NK_WINDOW_MINIMIZABLE|NK_WINDOW_TITLE))
     {
-        static int property = 20;
+        int property = last_property;
         char tmp[256];
         snprintf(tmp, sizeof(tmp), "fps:%f", 1.0f / delta_time_);
         nk_layout_row_dynamic(nk_ctx_, 30, 1);
@@ -397,7 +399,11 @@ void update_gui() {/* GUI */
         movable_ = nk_check_label(nk_ctx_, "movable", movable_);
 
         nk_layout_row_dynamic(nk_ctx_, 25, 1);
-        nk_property_int(nk_ctx_, "Compression:", 0, &property, 100, 10, 1);
+        nk_property_int(nk_ctx_, "Compression:", 0, &property, 100, 1, 1);
+        if (last_property != property) {
+            model_anim(&model_, 0, property);
+            last_property = property;
+        }
 
         nk_layout_row_dynamic(nk_ctx_, 20, 1);
         nk_label(nk_ctx_, "background:", NK_TEXT_LEFT);
@@ -494,10 +500,10 @@ int main() {
     init_image_data();
     model_init(&model_);
 //    model_load(&model_, "../nanosuit/nanosuit.obj1");
-    model_load(&model_, "../fish/f_bzy.obj");
+    model_load(&model_, "../fish/f_bzy.fbx");
     glm_mat4_identity(model_mat4_3d_);
     glm_translate(model_mat4_3d_, (vec3){0.0f, 0.0f, 0.0f});
-    glm_scale(model_mat4_3d_, (vec3){100.0f, 100.0f, 100.0f});
+    glm_scale(model_mat4_3d_, (vec3){1.0f, 1.0f, 1.0f});
 
 
     shader_use(shader_);
